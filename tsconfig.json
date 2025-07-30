@@ -3,13 +3,14 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "lib": ["es2023"],
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["."]
 }

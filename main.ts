@@ -1,27 +1,69 @@
 import { defineApp } from "@slflows/sdk/v1";
-import { blocks } from "./blocks/index";
+
+import Anthropic from "@anthropic-ai/sdk";
+import { generateMessage } from "./blocks/generateMessage";
+import { toolDefinition } from "./blocks/toolDefinition";
+import { remoteMcpServer } from "./blocks/remoteMcpServer";
 
 export const app = defineApp({
-  name: "{{APP_NAME}}",
+  name: "Anthropic AI",
   installationInstructions:
-    "{{APP_DESCRIPTION}}\n\nTo install:\n1. Add your API key\n2. Configure the base URL if needed\n3. Start using the blocks in your flows",
-
-  blocks,
-
+    "To connect your Anthropic AI account:\n1. **Get API Key**: Visit https://console.anthropic.com/ and create an API key\n2. **Configure**: Paste your API key in the 'Anthropic API Key' field below\n3. **Confirm**: Click 'Confirm' to complete the installation",
   config: {
-    apiKey: {
-      name: "API Key",
-      description: "Your service API key",
+    anthropicApiKey: {
+      name: "Anthropic API Key",
+      description: "Your Anthropic API key (starts with 'sk-ant-').",
       type: "string",
       required: true,
       sensitive: true,
     },
-    baseUrl: {
-      name: "Base URL",
-      description: "API base URL",
+    defaultModel: {
+      name: "Default model",
+      description: "The default model to use for API calls.",
       type: "string",
       required: false,
-      default: "https://api.example.com",
     },
+  },
+  blocks: {
+    generateMessage,
+    toolDefinition,
+    remoteMcpServer,
+  },
+  async onSync(input) {
+    const { anthropicApiKey } = input.app.config;
+
+    if (!anthropicApiKey) {
+      return {
+        newStatus: "failed",
+        customStatusDescription: "Anthropic API Key is required.",
+      };
+    }
+
+    const client = new Anthropic({
+      apiKey: anthropicApiKey,
+    });
+
+    try {
+      const response = await client.messages.countTokens({
+        model: input.app.config.defaultModel ?? "claude-3-5-sonnet-20241022",
+        messages: [
+          {
+            role: "user",
+            content: "Hello!",
+          },
+        ],
+      });
+
+      if (response.input_tokens <= 0) {
+        throw new Error();
+      }
+
+      return { newStatus: "ready" };
+    } catch {
+      return {
+        newStatus: "failed",
+        customStatusDescription: "API key validation failed",
+      };
+    }
   },
 });

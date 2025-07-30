@@ -1,0 +1,2767 @@
+{
+  "name": "Demo",
+  "blocks": [
+    {
+      "id": "appEntity_0",
+      "nameComponent": {
+        "name": "Get weather for city",
+        "description": "Fetches a weather for a given city"
+      },
+      "positionComponent": {
+        "position": {
+          "x": 519,
+          "y": 0
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "toolDefinition",
+        "schema": {
+          "order": 1,
+          "name": "Tool definition",
+          "category": "Definition",
+          "description": "Define a custom tool that can be called by the Tool Calling block.",
+          "config": {
+            "schema": {
+              "order": 0,
+              "name": "Schema",
+              "description": "JSON schema defining the parameters this tool accepts",
+              "type": {
+                "additionalProperties": true,
+                "properties": {
+                  "properties": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "required": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "fixed": false,
+              "required": true,
+              "hasValidator": false,
+              "fieldKey": ""
+            }
+          },
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "processResult": {
+              "order": 0,
+              "name": "Process result",
+              "description": "Send the result back to the tool caller",
+              "config": {
+                "result": {
+                  "order": 0,
+                  "name": "Result",
+                  "description": "The final result to return",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "onCall": {
+              "order": 0,
+              "name": "On call",
+              "description": "Emitted when the tool is called by the caller",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "parameters": {
+                    "additionalProperties": true,
+                    "description": "Tool parameters",
+                    "type": "object"
+                  }
+                },
+                "required": ["parameters"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": true,
+          "hasOnDrain": false,
+          "hasOnTimer": false
+        },
+        "configExprs": {
+          "schema": {
+            "code": "{\n  type: \"object\",\n  properties: {\n    city: {\n      type: \"string\"\n    }\n  },\n  required: [\"city\"]\n}"
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "onCall",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "processResult",
+              "configExprs": {
+                "result": {
+                  "code": "outputs.transform"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "lifecycleComponent": {}
+    },
+    {
+      "id": "transform_0",
+      "nameComponent": { "name": "Transform", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 489,
+          "y": 509
+        }
+      },
+      "coreEntityComponent": {
+        "transform": {
+          "outputExpr": {
+            "code": "\"pogoda jest fajna\""
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "default",
+            "outputCustomizationExpr": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "sleep_0",
+      "nameComponent": { "name": "Sleep", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 519,
+          "y": 281
+        }
+      },
+      "coreEntityComponent": {
+        "sleep": {
+          "sleepExpr": {
+            "code": "2"
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "default",
+            "outputCustomizationExpr": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "appEntity_1",
+      "nameComponent": {
+        "name": "Get stock price",
+        "description": "Fetches stock price from API"
+      },
+      "positionComponent": {
+        "position": {
+          "x": 37,
+          "y": 0
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "toolDefinition",
+        "schema": {
+          "order": 1,
+          "name": "Tool definition",
+          "category": "Definition",
+          "description": "Define a custom tool that can be called by the Tool Calling block.",
+          "config": {
+            "schema": {
+              "order": 0,
+              "name": "Schema",
+              "description": "JSON schema defining the parameters this tool accepts",
+              "type": {
+                "additionalProperties": true,
+                "properties": {
+                  "properties": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "required": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "fixed": false,
+              "required": true,
+              "hasValidator": false,
+              "fieldKey": ""
+            }
+          },
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "processResult": {
+              "order": 0,
+              "name": "Process result",
+              "description": "Send the result back to the tool caller",
+              "config": {
+                "result": {
+                  "order": 0,
+                  "name": "Result",
+                  "description": "The final result to return",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "onCall": {
+              "order": 0,
+              "name": "On call",
+              "description": "Emitted when the tool is called by the caller",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "parameters": {
+                    "additionalProperties": true,
+                    "description": "Tool parameters",
+                    "type": "object"
+                  }
+                },
+                "required": ["parameters"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": true,
+          "hasOnDrain": false,
+          "hasOnTimer": false
+        },
+        "configExprs": {
+          "schema": {
+            "code": "{\n      \"type\": \"object\",\n      \"properties\": {\n        \"ticker\": {\n          \"type\": \"string\",\n          \"description\": \"The stock ticker symbol, e.g. AAPL for Apple Inc.\"\n        }\n      },\n      \"required\": [\"ticker\"]\n    }"
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "onCall",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "processResult",
+              "configExprs": {
+                "result": {
+                  "code": "outputs.transform"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "lifecycleComponent": {}
+    },
+    {
+      "id": "transform_1",
+      "nameComponent": { "name": "Transform", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 0,
+          "y": 509
+        }
+      },
+      "coreEntityComponent": {
+        "transform": {
+          "outputExpr": {
+            "code": "\"112 usd\""
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "default",
+            "outputCustomizationExpr": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "appEntity_2",
+      "nameComponent": { "name": "OpenTofu MCP server", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 1257,
+          "y": 0
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "remoteMcpServer",
+        "schema": {
+          "order": 2,
+          "name": "Remote MCP server",
+          "category": "Definition",
+          "description": "Configure an MCP server to be utilized by Claude when generating messages.",
+          "config": {
+            "allowedTools": {
+              "order": 2,
+              "name": "Allowed tools",
+              "description": "The tools that are allowed to be called. If not provided, all tools are allowed. Set to empty array to allow no tools.",
+              "type": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "fixed": false,
+              "required": false,
+              "hasValidator": false,
+              "fieldKey": ""
+            },
+            "authorizationToken": {
+              "order": 1,
+              "name": "Authorization token",
+              "description": "OAuth authorization token if required by the MCP server.",
+              "type": {
+                "type": "string"
+              },
+              "fixed": false,
+              "required": false,
+              "hasValidator": false,
+              "fieldKey": ""
+            },
+            "url": {
+              "order": 0,
+              "name": "URL",
+              "description": "The URL of the MCP server. Must start with https://",
+              "type": {
+                "type": "string"
+              },
+              "fixed": false,
+              "required": true,
+              "hasValidator": false,
+              "fieldKey": ""
+            }
+          },
+          "hasOnInternalMessage": false,
+          "inputs": {},
+          "outputs": {},
+          "signals": {},
+          "hasOnSync": true,
+          "hasOnDrain": false,
+          "hasOnTimer": false
+        },
+        "configExprs": {
+          "url": {
+            "code": "\"https://mcp.opentofu.org/sse\""
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [],
+        "appBlock": {
+          "inputs": []
+        }
+      },
+      "lifecycleComponent": {}
+    },
+    {
+      "id": "appEntity_3",
+      "nameComponent": { "name": "Tool call demo", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 914,
+          "y": 0
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"check weather for gdansk\""
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "appEntity_4",
+      "nameComponent": { "name": "MCP server demo", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 1257,
+          "y": 153
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "mcpServers": {
+                  "code": "[ref(\"signal.opentofuMcpServer.definition\")]"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"find more about blueprint resource in spacelift provider\""
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "appEntity_5",
+      "nameComponent": { "name": "Tool call + MCP server", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 1257,
+          "y": 260
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "mcpServers": {
+                  "code": "[ref(\"signal.opentofuMcpServer.definition\")]"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"check weather for gdansk and find more about blueprint resource in spacelift provider\""
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "appEntity_6",
+      "nameComponent": {
+        "name": "Parallel tool calls demo",
+        "description": ""
+      },
+      "positionComponent": {
+        "position": {
+          "x": 914,
+          "y": 113
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"check weather for gdansk and stock price for NVDA\""
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "appEntity_7",
+      "nameComponent": {
+        "name": "Sequential tool calls demo",
+        "description": ""
+      },
+      "positionComponent": {
+        "position": {
+          "x": 914,
+          "y": 354
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"first check weather for gdansk and after that check stock price for NVDA\""
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sleep_1",
+      "nameComponent": { "name": "Sleep", "description": "" },
+      "positionComponent": {
+        "position": {
+          "x": 37,
+          "y": 281
+        }
+      },
+      "coreEntityComponent": {
+        "sleep": {
+          "sleepExpr": {
+            "code": "2"
+          }
+        }
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "default",
+            "outputCustomizationExpr": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "appEntity_8",
+      "nameComponent": {
+        "name": "Everything",
+        "description": "a tool call + mcp server + structured output"
+      },
+      "positionComponent": {
+        "position": {
+          "x": 1257,
+          "y": 374
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "mcpServers": {
+                  "code": "[ref(\"signal.opentofuMcpServer.definition\")]"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"check weather for gdansk and find more about blueprint resource in spacelift provider\""
+                },
+                "schema": {
+                  "code": "{\n  type: \"object\",\n  properties: {\n    weather: {\n      type: \"string\",\n    },\n    description: {\n      type: \"string\"\n    }\n  },\n  required: [\"weather\", \"description\"]\n}"
+                },
+                "thinking": {
+                  "code": "false"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "appEntity_9",
+      "nameComponent": {
+        "name": "Parallel tool calls with thinking demo",
+        "description": ""
+      },
+      "positionComponent": {
+        "position": {
+          "x": 914,
+          "y": 226
+        }
+      },
+      "appEntityComponent": {
+        "appInstallationId": "019740a8-e53e-784d-84fc-1845df763896",
+        "blockKey": "generateMessage",
+        "schema": {
+          "order": 0,
+          "name": "Generate message",
+          "category": "Core",
+          "description": "Generates a message based on provided input and parameters.",
+          "config": {},
+          "hasOnInternalMessage": true,
+          "inputs": {
+            "default": {
+              "order": 0,
+              "config": {
+                "force": {
+                  "order": 10,
+                  "name": "Force",
+                  "description": "Force the model to call a tool. Provide a name to call a specific tool or `true` to always call any tool.",
+                  "type": {
+                    "anyOf": [
+                      {
+                        "description": "The name of the tool to call.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Always call any tool.",
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxRetries": {
+                  "order": 5,
+                  "name": "Max retries",
+                  "description": "The number of times to retry the call if it fails to generate a valid object. Works only if schema is provided.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "maxTokens": {
+                  "order": 3,
+                  "name": "Max tokens",
+                  "description": "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": 1024,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "mcpServers": {
+                  "order": 9,
+                  "name": "Remote MCP servers",
+                  "description": "Array of remote MCP servers to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "allowedTools": {
+                          "description": "Allowed tools for the MCP server",
+                          "type": "array"
+                        },
+                        "authorizationToken": {
+                          "description": "Authorization token for the MCP server",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the MCP server",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of the MCP server",
+                          "enum": ["url"],
+                          "type": "string"
+                        },
+                        "url": {
+                          "description": "URL of the MCP server",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "url", "type"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "model": {
+                  "order": 0,
+                  "name": "Model",
+                  "description": "The model that will complete your prompt.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "prompt": {
+                  "order": 1,
+                  "name": "Prompt",
+                  "description": "The input to the model.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "schema": {
+                  "order": 4,
+                  "name": "Schema",
+                  "description": "The JSON schema to generate the object from.",
+                  "type": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "systemPrompt": {
+                  "order": 2,
+                  "name": "System prompt",
+                  "description": "A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+                  "type": {
+                    "type": "string"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "temperature": {
+                  "order": 11,
+                  "name": "Temperature",
+                  "description": "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinking": {
+                  "order": 6,
+                  "name": "Thinking",
+                  "description": "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
+                  "type": {
+                    "type": "boolean"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "default": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "thinkingBudget": {
+                  "order": 7,
+                  "name": "Thinking budget",
+                  "description": "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+                  "type": {
+                    "type": "number"
+                  },
+                  "fixed": false,
+                  "required": false,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                },
+                "toolDefinitions": {
+                  "order": 8,
+                  "name": "Tools",
+                  "description": "Array of tool blocks to use",
+                  "type": {
+                    "items": {
+                      "properties": {
+                        "blockId": {
+                          "description": "ID of the tool definition block",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "Description of the tool",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the tool",
+                          "type": "string"
+                        },
+                        "schema": {
+                          "description": "Schema of the tool",
+                          "type": "object"
+                        }
+                      },
+                      "required": ["name", "description", "schema"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "fixed": false,
+                  "required": true,
+                  "hasValidator": false,
+                  "fieldKey": ""
+                }
+              },
+              "hasOnEvent": true
+            }
+          },
+          "outputs": {
+            "result": {
+              "order": 0,
+              "name": "Result",
+              "description": "The generated message",
+              "default": true,
+              "possiblePrimaryParents": [],
+              "type": {
+                "properties": {
+                  "object": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The generated object if schema is provided"
+                  },
+                  "text": {
+                    "description": "The generated message",
+                    "type": "string"
+                  },
+                  "usage": {
+                    "properties": {
+                      "inputTokens": {
+                        "type": "number"
+                      },
+                      "outputTokens": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": ["usage"],
+                "type": "object"
+              }
+            }
+          },
+          "signals": {},
+          "hasOnSync": false,
+          "hasOnDrain": false,
+          "hasOnTimer": true
+        },
+        "configExprs": {}
+      },
+      "eventProcessingComponent": {
+        "active": true,
+        "outputs": [
+          {
+            "outputKey": "result",
+            "outputCustomizationExpr": null
+          }
+        ],
+        "appBlock": {
+          "inputs": [
+            {
+              "inputKey": "default",
+              "configExprs": {
+                "force": {
+                  "code": "false"
+                },
+                "maxTokens": {
+                  "code": "10000"
+                },
+                "model": {
+                  "code": "\"claude-sonnet-4-20250514\""
+                },
+                "prompt": {
+                  "code": "\"check weather for gdansk and stock price for NVDA\""
+                },
+                "thinking": {
+                  "code": "true"
+                },
+                "thinkingBudget": {
+                  "code": "1024"
+                },
+                "toolDefinitions": {
+                  "code": "[\n  ref(\"signal.getStockPrice.definition\"),\n  ref(\"signal.getWeatherForCity.definition\")\n]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "blockLinks": [
+    {
+      "fromEntityId": "appEntity_0",
+      "fromOutputKey": "onCall",
+      "toEntityId": "sleep_0",
+      "toInputKey": "default"
+    },
+    {
+      "fromEntityId": "transform_0",
+      "fromOutputKey": "default",
+      "toEntityId": "appEntity_0",
+      "toInputKey": "processResult"
+    },
+    {
+      "fromEntityId": "sleep_0",
+      "fromOutputKey": "default",
+      "toEntityId": "transform_0",
+      "toInputKey": "default"
+    },
+    {
+      "fromEntityId": "appEntity_1",
+      "fromOutputKey": "onCall",
+      "toEntityId": "sleep_1",
+      "toInputKey": "default"
+    },
+    {
+      "fromEntityId": "transform_1",
+      "fromOutputKey": "default",
+      "toEntityId": "appEntity_1",
+      "toInputKey": "processResult"
+    },
+    {
+      "fromEntityId": "sleep_1",
+      "fromOutputKey": "default",
+      "toEntityId": "transform_1",
+      "toInputKey": "default"
+    }
+  ],
+  "appInstallations": [
+    {
+      "id": "019740a8-e53e-784d-84fc-1845df763896",
+      "name": "Demo",
+      "appId": "019740a6-7515-736a-8aec-9bd9698d097d",
+      "appName": "Anthropic",
+      "appVersion": "1.0.0"
+    }
+  ],
+  "exportedFrom": "019740a9-ec43-7c80-958b-423113ca5cb1"
+}
