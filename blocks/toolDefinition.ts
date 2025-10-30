@@ -129,7 +129,7 @@ export const toolDefinition: AppBlock = {
       },
       {
         echo: true,
-        secondaryParentEventIds: [eventId],
+        parentEventId: eventId,
       },
     );
   },
