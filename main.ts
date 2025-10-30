@@ -22,6 +22,7 @@ export const app = defineApp({
       description: "The default model to use for API calls.",
       type: "string",
       required: false,
+      default: "claude-sonnet-4-5",
     },
   },
   blocks: {

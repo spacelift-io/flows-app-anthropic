@@ -54,14 +54,23 @@ export const toolDefinition: AppBlock = {
           const { value } = await kv.block.get(executionKey);
 
           if (value) {
+            // Automatically stringify the result if it's not a string
+            const result =
+              typeof config.result === "string"
+                ? config.result
+                : JSON.stringify(config.result);
+
             await messaging.sendToBlocks({
               body: {
-                result: config.result,
+                result,
                 eventId: value.eventId,
                 toolCallId: value.toolCallId,
               },
               blockIds: [value.blockId],
             });
+
+            // Emit the result on the result output
+            await events.emit({ result }, { outputKey: "result" });
           }
 
           return;
@@ -76,6 +85,7 @@ export const toolDefinition: AppBlock = {
     onCall: {
       name: "On call",
       description: "Emitted when the tool is called by the caller",
+      default: true,
       type: {
         type: "object",
         properties: {
@@ -86,6 +96,20 @@ export const toolDefinition: AppBlock = {
           },
         },
         required: ["parameters"],
+      },
+    },
+    result: {
+      name: "Result",
+      description: "Emitted when a result is processed",
+      type: {
+        type: "object",
+        properties: {
+          result: {
+            type: "string",
+            description: "The tool result",
+          },
+        },
+        required: ["result"],
       },
     },
   },
@@ -129,7 +153,7 @@ export const toolDefinition: AppBlock = {
       },
       {
         echo: true,
-        secondaryParentEventIds: [eventId],
+        parentEventId: eventId,
       },
     );
   },
