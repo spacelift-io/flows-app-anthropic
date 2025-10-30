@@ -54,9 +54,14 @@ export const toolDefinition: AppBlock = {
           const { value } = await kv.block.get(executionKey);
 
           if (value) {
+            // Automatically stringify the result if it's not a string
+            const result = typeof config.result === "string"
+              ? config.result
+              : JSON.stringify(config.result);
+
             await messaging.sendToBlocks({
               body: {
-                result: config.result,
+                result,
                 eventId: value.eventId,
                 toolCallId: value.toolCallId,
               },
