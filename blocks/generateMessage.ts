@@ -45,7 +45,7 @@ export const generateMessage: AppBlock = {
           description:
             "The maximum number of tokens to generate before stopping. Note that the models may stop before reaching this maximum. This parameter only specifies the absolute maximum number of tokens to generate.",
           type: "number",
-          default: 1024,
+          default: 4096,
           required: false,
         },
         schema: {
@@ -70,7 +70,7 @@ export const generateMessage: AppBlock = {
             "Whether to enable Claude's extended thinking. This will make the model think more deeply and generate more detailed responses. This will also increase the cost of the request.",
           type: "boolean",
           required: false,
-          default: false,
+          default: true,
         },
         thinkingBudget: {
           name: "Thinking budget",
@@ -78,6 +78,7 @@ export const generateMessage: AppBlock = {
             "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
           type: "number",
           required: false,
+          default: 2048,
         },
         toolDefinitions: {
           name: "Tools",
