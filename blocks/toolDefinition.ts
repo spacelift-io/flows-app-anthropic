@@ -55,9 +55,10 @@ export const toolDefinition: AppBlock = {
 
           if (value) {
             // Automatically stringify the result if it's not a string
-            const result = typeof config.result === "string"
-              ? config.result
-              : JSON.stringify(config.result);
+            const result =
+              typeof config.result === "string"
+                ? config.result
+                : JSON.stringify(config.result);
 
             await messaging.sendToBlocks({
               body: {
@@ -69,10 +70,7 @@ export const toolDefinition: AppBlock = {
             });
 
             // Emit the result on the result output
-            await events.emit(
-              { result },
-              { outputKey: "result" }
-            );
+            await events.emit({ result }, { outputKey: "result" });
           }
 
           return;
