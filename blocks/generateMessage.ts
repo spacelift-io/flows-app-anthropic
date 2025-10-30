@@ -82,7 +82,8 @@ export const generateMessage: AppBlock = {
         },
         toolDefinitions: {
           name: "Tools",
-          description: "Array of tool blocks to use",
+          description:
+            "Array of tool blocks to use.\nYou can specify them like this:\n```javascript\n[signals.toolBlock.definition, ...]\n```",
           type: {
             type: "array",
             items: {
