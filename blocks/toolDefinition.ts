@@ -67,6 +67,12 @@ export const toolDefinition: AppBlock = {
               },
               blockIds: [value.blockId],
             });
+
+            // Emit the result on the result output
+            await events.emit(
+              { result },
+              { outputKey: "result" }
+            );
           }
 
           return;
@@ -81,6 +87,7 @@ export const toolDefinition: AppBlock = {
     onCall: {
       name: "On call",
       description: "Emitted when the tool is called by the caller",
+      default: true,
       type: {
         type: "object",
         properties: {
@@ -91,6 +98,20 @@ export const toolDefinition: AppBlock = {
           },
         },
         required: ["parameters"],
+      },
+    },
+    result: {
+      name: "Result",
+      description: "Emitted when a result is processed",
+      type: {
+        type: "object",
+        properties: {
+          result: {
+            type: "string",
+            description: "The tool result",
+          },
+        },
+        required: ["result"],
       },
     },
   },
