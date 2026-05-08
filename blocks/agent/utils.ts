@@ -6,7 +6,11 @@ import {
   defaultModelFor,
   resolveAuth,
 } from "../client";
-import { BUILTIN_BETAS_AGENT, SKILLS_BETAS } from "../../anthropicOptions";
+import {
+  BUILTIN_BETAS_AGENT,
+  SKILLS_BETAS,
+  mergeBetas,
+} from "../../anthropicOptions";
 
 interface ToolDefinition {
   name: string;
@@ -42,6 +46,7 @@ interface CallState {
   originalEventId: string;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }
 
 export function createInvocationId(
@@ -98,6 +103,7 @@ function streamMessage(params: {
   schema?: Anthropic.Messages.Tool.InputSchema | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }) {
   const {
     auth,
@@ -113,6 +119,7 @@ function streamMessage(params: {
     thinkingBudget,
     skills,
     containerId,
+    betas,
   } = params;
 
   const client = createClient(auth);
@@ -133,8 +140,8 @@ function streamMessage(params: {
       : []),
   ];
 
-  const betas: string[] = [
-    ...BUILTIN_BETAS_AGENT,
+  const allBetas: string[] = [
+    ...betas,
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
@@ -179,7 +186,7 @@ function streamMessage(params: {
         }
       : undefined,
     container: hasSkills ? { id: containerId, skills } : undefined,
-    betas,
+    ...(allBetas.length > 0 ? { betas: allBetas } : {}),
   });
 }
 
@@ -236,6 +243,11 @@ export function validateConfig(
     maxRetries: (inputConfig.maxRetries ?? 1) as number,
     temperature: inputConfig.temperature as number | undefined,
     skills,
+    betas: mergeBetas(
+      appConfig.extraBetas,
+      staticConfig.extraBetas,
+      BUILTIN_BETAS_AGENT,
+    ),
   };
 }
 
@@ -361,6 +373,7 @@ async function storeCallState(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }) {
   const { executionId, toolCalls, ...rest } = params;
 
@@ -483,6 +496,7 @@ export async function continueTurn(params: {
   originalEventId: string;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }): Promise<void> {
   const {
     executionId,
@@ -507,6 +521,7 @@ export async function continueTurn(params: {
     originalEventId,
     skills,
     containerId,
+    betas,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -558,6 +573,7 @@ export async function continueTurn(params: {
     originalEventId,
     skills,
     containerId,
+    betas,
   });
 }
 
@@ -583,6 +599,7 @@ async function handleModelResponse(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
   continuations?: number;
 }): Promise<void> {
   const {
@@ -607,6 +624,7 @@ async function handleModelResponse(params: {
     temperature,
     skills,
     containerId,
+    betas,
     continuations = 0,
   } = params;
 
@@ -705,6 +723,7 @@ async function handleModelResponse(params: {
       originalEventId,
       skills,
       containerId: message.container?.id ?? containerId,
+      betas,
     });
 
     return setTimeoutTimer(executionId, nextTurn);
@@ -745,6 +764,7 @@ async function handleModelResponse(params: {
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
+      betas,
       continuations: continuations + 1,
     });
   }
@@ -774,6 +794,7 @@ export async function executeTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
   continuations?: number;
 }): Promise<void> {
   const {
@@ -797,6 +818,7 @@ export async function executeTurn(params: {
     temperature,
     skills,
     containerId,
+    betas,
     continuations,
   } = params;
 
@@ -827,6 +849,7 @@ export async function executeTurn(params: {
         schema,
         skills,
         containerId,
+        betas,
       });
 
       await syncPendingEventWithStream(pendingId, stream);
@@ -855,6 +878,7 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        betas,
         continuations,
       });
     } catch (error) {

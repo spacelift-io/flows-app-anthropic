@@ -10,6 +10,7 @@ import {
 import {
   BUILTIN_BETAS_GENERATE_MESSAGE,
   SKILLS_BETAS,
+  mergeBetas,
 } from "../anthropicOptions";
 
 interface ToolDefinition {
@@ -46,6 +47,7 @@ interface CallState {
   originalEventId: string;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }
 
 interface SkillParam {
@@ -88,6 +90,7 @@ export function streamMessage(params: {
   thinkingBudget?: number | undefined;
   skills?: SkillParam[];
   containerId?: string;
+  betas: string[];
 }) {
   const {
     auth,
@@ -103,6 +106,7 @@ export function streamMessage(params: {
     thinkingBudget,
     skills = [],
     containerId,
+    betas,
   } = params;
 
   const shouldCallSpecificTool = tools.length > 0 && typeof force === "string";
@@ -124,8 +128,8 @@ export function streamMessage(params: {
       : []),
   ];
 
-  const betas: string[] = [
-    ...(auth.kind === "bedrock" ? [] : BUILTIN_BETAS_GENERATE_MESSAGE),
+  const allBetas: string[] = [
+    ...betas,
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
@@ -177,7 +181,7 @@ export function streamMessage(params: {
               }
         : undefined,
     container: hasSkills ? { id: containerId, skills } : undefined,
-    ...(betas.length > 0 ? { betas } : {}),
+    ...(allBetas.length > 0 ? { betas: allBetas } : {}),
   });
 }
 
@@ -242,6 +246,11 @@ export function validateConfig(
     maxRetries: (inputConfig.maxRetries ?? 1) as number,
     temperature: inputConfig.temperature as number | undefined,
     skills,
+    betas: mergeBetas(
+      appConfig.extraBetas,
+      inputConfig.extraBetas,
+      auth.kind === "bedrock" ? [] : BUILTIN_BETAS_GENERATE_MESSAGE,
+    ),
   };
 }
 
@@ -344,6 +353,7 @@ export async function generateObject(
     inputTokens: number;
     outputTokens: number;
     parentEventId: string;
+    betas: string[];
   },
 ): Promise<void> {
   const {
@@ -355,6 +365,7 @@ export async function generateObject(
     maxRetries,
     pendingId,
     parentEventId,
+    betas,
   } = params;
 
   let retryCount = 0;
@@ -403,6 +414,7 @@ export async function generateObject(
         mcpServers: [],
         force: "json",
         auth,
+        betas,
       });
 
       const message = await stream.finalMessage();
@@ -506,6 +518,7 @@ export async function storeCallState(params: {
   originalEventId: string;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }) {
   const { eventId, toolCalls, ...rest } = params;
 
@@ -625,6 +638,7 @@ export async function continueTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
 }): Promise<void> {
   const {
     eventId,
@@ -648,6 +662,7 @@ export async function continueTurn(params: {
     temperature,
     skills,
     containerId,
+    betas,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -698,6 +713,7 @@ export async function continueTurn(params: {
     temperature,
     skills,
     containerId,
+    betas,
   });
 }
 
@@ -722,6 +738,7 @@ export async function handleModelResponse(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
   continuations?: number;
 }): Promise<void> {
   const {
@@ -745,6 +762,7 @@ export async function handleModelResponse(params: {
     temperature,
     skills,
     containerId,
+    betas,
     continuations = 0,
   } = params;
 
@@ -776,6 +794,7 @@ export async function handleModelResponse(params: {
         inputTokens: message.usage.input_tokens,
         outputTokens: message.usage.output_tokens,
         parentEventId: eventId,
+        betas,
       });
     }
 
@@ -844,6 +863,7 @@ export async function handleModelResponse(params: {
       originalEventId: eventId,
       skills,
       containerId: message.container?.id ?? containerId,
+      betas,
     });
 
     return setTimeoutTimer(eventId);
@@ -883,6 +903,7 @@ export async function handleModelResponse(params: {
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
+      betas,
       continuations: continuations + 1,
     });
   }
@@ -911,6 +932,7 @@ export async function executeTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  betas: string[];
   continuations?: number;
 }): Promise<void> {
   const {
@@ -933,6 +955,7 @@ export async function executeTurn(params: {
     temperature,
     skills,
     containerId,
+    betas,
     continuations,
   } = params;
 
@@ -963,6 +986,7 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        betas,
       });
 
       await syncPendingEventWithStream(pendingId, stream);
@@ -990,6 +1014,7 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        betas,
         continuations,
       });
     } catch (error) {

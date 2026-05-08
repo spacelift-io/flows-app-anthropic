@@ -14,6 +14,7 @@ import {
   clearTimerLock,
 } from "./utils";
 import { resolveAuth, createClient } from "./client";
+import { EXTRA_BETAS_FIELD } from "../anthropicOptions";
 
 export const generateMessage: AppBlock = {
   name: "Generate message",
@@ -211,6 +212,7 @@ export const generateMessage: AppBlock = {
             }
           },
         },
+        extraBetas: EXTRA_BETAS_FIELD,
       },
       onEvent: async (input) => {
         const {
@@ -228,6 +230,7 @@ export const generateMessage: AppBlock = {
           maxRetries,
           temperature,
           skills,
+          betas,
         } = validateConfig(input.app.config, input.event.inputConfig);
 
         const pendingId = await events.createPending({
@@ -258,6 +261,7 @@ export const generateMessage: AppBlock = {
           thinkingBudget,
           temperature,
           skills,
+          betas,
         });
       },
     },
@@ -316,6 +320,7 @@ export const generateMessage: AppBlock = {
       temperature,
       skills,
       containerId,
+      betas,
     } = await loadCallState(eventId);
 
     const { haveAllResults, toolResults } = await loadToolResults({
@@ -352,6 +357,7 @@ export const generateMessage: AppBlock = {
       auth: resolveAuth(input.app.config),
       skills,
       containerId,
+      betas,
       blockId: input.block.id,
     });
 
@@ -383,6 +389,7 @@ export const generateMessage: AppBlock = {
       temperature,
       skills,
       containerId,
+      betas,
     } = await loadCallState(eventId);
 
     // Clear the timeout in case we get all results and can either continue or complete.
@@ -430,6 +437,7 @@ export const generateMessage: AppBlock = {
       auth: resolveAuth(input.app.config),
       skills,
       containerId,
+      betas,
       blockId: input.block.id,
     });
   },
