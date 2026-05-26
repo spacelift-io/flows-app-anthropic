@@ -525,7 +525,7 @@ export async function loadToolResults(params: {
 }
 
 export async function setTimeoutTimer(eventId: string) {
-  const id = await timers.set(60 * 2, {
+  const id = await timers.block.set(60 * 2, {
     description: "Waiting for tool results",
     inputPayload: {
       eventId,
@@ -542,7 +542,7 @@ export async function clearTimeoutTimer(eventId: string) {
   const { value } = await kv.block.get(`timer-${eventId}`);
 
   if (value) {
-    await timers.unset(value);
+    await timers.block.unset(value);
   }
 }
 
