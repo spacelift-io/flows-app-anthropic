@@ -6,12 +6,21 @@ import {
   defaultModelFor,
   resolveAuth,
 } from "../client";
+import { BUILTIN_BETAS_AGENT, SKILLS_BETAS } from "../../anthropicOptions";
 
 interface ToolDefinition {
   name: string;
   description: string;
   schema: Anthropic.Messages.Tool.InputSchema;
 }
+
+interface SkillParam {
+  skill_id: string;
+  type: "anthropic" | "custom";
+  version: string;
+}
+
+const MAX_PAUSE_CONTINUATIONS = 5;
 
 interface CallState {
   blockId: string;
@@ -31,6 +40,8 @@ interface CallState {
   thinkingBudget: number | undefined;
   temperature: number | undefined;
   originalEventId: string;
+  skills: SkillParam[];
+  containerId?: string;
 }
 
 export function createInvocationId(
@@ -85,6 +96,8 @@ function streamMessage(params: {
   thinking?: boolean | undefined;
   thinkingBudget?: number | undefined;
   schema?: Anthropic.Messages.Tool.InputSchema | undefined;
+  skills: SkillParam[];
+  containerId?: string;
 }) {
   const {
     auth,
@@ -98,12 +111,32 @@ function streamMessage(params: {
     force,
     thinking,
     thinkingBudget,
+    skills,
+    containerId,
   } = params;
 
   const client = createClient(auth);
 
   const shouldCallSpecificTool = tools.length > 0 && typeof force === "string";
   const shouldCallAnyTool = tools.length > 0 && force === true;
+  const hasSkills = skills.length > 0;
+
+  const allTools: Anthropic.Beta.Messages.BetaToolUnion[] = [
+    ...tools,
+    ...(hasSkills
+      ? [
+          {
+            type: "code_execution_20250825" as const,
+            name: "code_execution" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const betas: string[] = [
+    ...BUILTIN_BETAS_AGENT,
+    ...(hasSkills ? SKILLS_BETAS : []),
+  ];
 
   return client.beta.messages.stream({
     max_tokens: maxTokens,
@@ -111,7 +144,7 @@ function streamMessage(params: {
     system: systemPrompt,
     model,
     messages,
-    tools,
+    tools: allTools,
     thinking:
       thinking && thinkingBudget
         ? {
@@ -120,7 +153,7 @@ function streamMessage(params: {
           }
         : undefined,
     tool_choice:
-      tools.length > 0
+      allTools.length > 0
         ? shouldCallSpecificTool
           ? {
               type: "tool",
@@ -145,6 +178,8 @@ function streamMessage(params: {
           },
         }
       : undefined,
+    container: hasSkills ? { id: containerId, skills } : undefined,
+    betas,
   });
 }
 
@@ -168,6 +203,23 @@ export function validateConfig(
     );
   }
 
+  const skills: SkillParam[] = ((staticConfig.skills ?? []) as string[]).map(
+    (s) => {
+      const [skillId, version] = s.split(":");
+      return {
+        skill_id: skillId,
+        type: skillId.startsWith("skill_")
+          ? ("custom" as const)
+          : ("anthropic" as const),
+        version: version ?? "latest",
+      };
+    },
+  );
+
+  if (auth.kind === "bedrock" && skills.length > 0) {
+    throw new Error("Skills are not supported on the AWS Bedrock backend.");
+  }
+
   return {
     model,
     auth,
@@ -183,6 +235,7 @@ export function validateConfig(
       | undefined,
     maxRetries: (inputConfig.maxRetries ?? 1) as number,
     temperature: inputConfig.temperature as number | undefined,
+    skills,
   };
 }
 
@@ -306,6 +359,8 @@ async function storeCallState(params: {
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
 }) {
   const { executionId, toolCalls, ...rest } = params;
 
@@ -426,6 +481,8 @@ export async function continueTurn(params: {
   thinkingBudget: number | undefined;
   temperature: number | undefined;
   originalEventId: string;
+  skills: SkillParam[];
+  containerId?: string;
 }): Promise<void> {
   const {
     executionId,
@@ -448,6 +505,8 @@ export async function continueTurn(params: {
     thinkingBudget,
     temperature,
     originalEventId,
+    skills,
+    containerId,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -497,6 +556,8 @@ export async function continueTurn(params: {
     thinkingBudget,
     temperature,
     originalEventId,
+    skills,
+    containerId,
   });
 }
 
@@ -514,11 +575,15 @@ async function handleModelResponse(params: {
   maxTokens: number;
   systemPrompt: string | undefined;
   turn: number;
+  auth: AnthropicAuth;
   maxRetries: number;
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
+  continuations?: number;
 }): Promise<void> {
   const {
     message,
@@ -534,11 +599,15 @@ async function handleModelResponse(params: {
     maxTokens,
     systemPrompt,
     turn,
+    auth,
     maxRetries,
     schema,
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
+    continuations = 0,
   } = params;
 
   const { toolNames, toolOutputKeys } = processToolDefinitions(toolDefinitions);
@@ -634,9 +703,50 @@ async function handleModelResponse(params: {
       thinkingBudget,
       temperature,
       originalEventId,
+      skills,
+      containerId: message.container?.id ?? containerId,
     });
 
     return setTimeoutTimer(executionId, nextTurn);
+  }
+
+  if (message.stop_reason === "pause_turn") {
+    if (continuations >= MAX_PAUSE_CONTINUATIONS) {
+      await events.cancelPending(pendingId, "Exceeded maximum continuations");
+      await deleteCallState(executionId);
+      return;
+    }
+
+    await events.updatePending(pendingId, {
+      statusDescription: "Processing...",
+    });
+
+    return executeTurn({
+      executionId,
+      blockId,
+      pendingId,
+      originalEventId,
+      eventIds,
+      messages: [
+        ...previousMessages,
+        { role: message.role, content: message.content },
+      ],
+      toolDefinitions,
+      force,
+      model,
+      maxTokens,
+      systemPrompt,
+      turn,
+      auth,
+      maxRetries,
+      schema,
+      thinking,
+      thinkingBudget,
+      temperature,
+      skills,
+      containerId: message.container?.id ?? containerId,
+      continuations: continuations + 1,
+    });
   }
 
   await events.cancelPending(pendingId, "Unexpected response from model");
@@ -662,6 +772,9 @@ export async function executeTurn(params: {
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
+  continuations?: number;
 }): Promise<void> {
   const {
     executionId,
@@ -682,6 +795,9 @@ export async function executeTurn(params: {
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
+    continuations,
   } = params;
 
   let retryCount = 0;
@@ -709,6 +825,8 @@ export async function executeTurn(params: {
         thinkingBudget,
         temperature,
         schema,
+        skills,
+        containerId,
       });
 
       await syncPendingEventWithStream(pendingId, stream);
@@ -729,11 +847,15 @@ export async function executeTurn(params: {
         maxTokens,
         systemPrompt,
         turn,
+        auth,
         maxRetries,
         schema,
         thinking,
         thinkingBudget,
         temperature,
+        skills,
+        containerId,
+        continuations,
       });
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));

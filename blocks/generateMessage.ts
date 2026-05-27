@@ -13,7 +13,7 @@ import {
   setTimerLock,
   clearTimerLock,
 } from "./utils";
-import { resolveAuth } from "./client";
+import { resolveAuth, createClient } from "./client";
 
 export const generateMessage: AppBlock = {
   name: "Generate message",
@@ -170,6 +170,47 @@ export const generateMessage: AppBlock = {
           type: "number",
           required: false,
         },
+        skills: {
+          name: "Skills",
+          description:
+            "Anthropic skills to enable (e.g. pptx, xlsx, docx, pdf, or custom skill IDs).",
+          type: {
+            type: "array",
+            items: { type: "string" },
+          },
+          required: false,
+          suggestValues: async ({ app, searchPhrase }) => {
+            try {
+              const auth = resolveAuth(app.config);
+
+              if (auth.kind !== "anthropic") {
+                return { suggestedValues: [] };
+              }
+
+              const client = createClient(auth);
+              const skills = await client.beta.skills.list();
+              const query = searchPhrase?.toLowerCase();
+
+              return {
+                suggestedValues: skills.data.flatMap((skill) => {
+                  const label = skill.display_title ?? skill.id;
+
+                  if (
+                    query &&
+                    !label.toLowerCase().includes(query) &&
+                    !skill.id.includes(query)
+                  ) {
+                    return [];
+                  }
+
+                  return [{ label, value: skill.id }];
+                }),
+              };
+            } catch {
+              return { suggestedValues: [] };
+            }
+          },
+        },
       },
       onEvent: async (input) => {
         const {
@@ -186,6 +227,7 @@ export const generateMessage: AppBlock = {
           schema,
           maxRetries,
           temperature,
+          skills,
         } = validateConfig(input.app.config, input.event.inputConfig);
 
         const pendingId = await events.createPending({
@@ -215,6 +257,7 @@ export const generateMessage: AppBlock = {
           thinking,
           thinkingBudget,
           temperature,
+          skills,
         });
       },
     },
@@ -271,6 +314,8 @@ export const generateMessage: AppBlock = {
       thinking,
       thinkingBudget,
       temperature,
+      skills,
+      containerId,
     } = await loadCallState(eventId);
 
     const { haveAllResults, toolResults } = await loadToolResults({
@@ -305,6 +350,8 @@ export const generateMessage: AppBlock = {
       thinkingBudget,
       temperature,
       auth: resolveAuth(input.app.config),
+      skills,
+      containerId,
       blockId: input.block.id,
     });
 
@@ -334,6 +381,8 @@ export const generateMessage: AppBlock = {
       thinking,
       thinkingBudget,
       temperature,
+      skills,
+      containerId,
     } = await loadCallState(eventId);
 
     // Clear the timeout in case we get all results and can either continue or complete.
@@ -379,6 +428,8 @@ export const generateMessage: AppBlock = {
       thinkingBudget,
       temperature,
       auth: resolveAuth(input.app.config),
+      skills,
+      containerId,
       blockId: input.block.id,
     });
   },

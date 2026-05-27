@@ -14,7 +14,7 @@ import {
   validateConfig,
   getToolDefinitionOutputKey,
 } from "./utils";
-import { resolveAuth } from "../client";
+import { resolveAuth, createClient } from "../client";
 import { randomUUID } from "node:crypto";
 
 export const agent: AppBlock = {
@@ -68,6 +68,47 @@ export const agent: AppBlock = {
         type: "jsonSchemaObject",
       },
       required: false,
+    },
+    skills: {
+      name: "Skills",
+      description:
+        "Anthropic skills to enable (e.g. pptx, xlsx, docx, pdf, or custom skill IDs).",
+      type: {
+        type: "array",
+        items: { type: "string" },
+      },
+      required: false,
+      suggestValues: async ({ app, searchPhrase }) => {
+        try {
+          const auth = resolveAuth(app.config);
+
+          if (auth.kind !== "anthropic") {
+            return { suggestedValues: [] };
+          }
+
+          const client = createClient(auth);
+          const skills = await client.beta.skills.list();
+          const query = searchPhrase?.toLowerCase();
+
+          return {
+            suggestedValues: skills.data.flatMap((skill) => {
+              const label = skill.display_title ?? skill.id;
+
+              if (
+                query &&
+                !label.toLowerCase().includes(query) &&
+                !skill.id.includes(query)
+              ) {
+                return [];
+              }
+
+              return [{ label, value: skill.id }];
+            }),
+          };
+        } catch {
+          return { suggestedValues: [] };
+        }
+      },
     },
   },
   inputs: {
@@ -165,6 +206,7 @@ export const agent: AppBlock = {
           schema,
           maxRetries,
           temperature,
+          skills,
         } = validateConfig(
           input.app.config,
           input.block.config,
@@ -201,6 +243,7 @@ export const agent: AppBlock = {
           thinkingBudget,
           temperature,
           originalEventId: input.event.id,
+          skills,
         });
       },
     },
@@ -268,6 +311,8 @@ export const agent: AppBlock = {
         temperature: state.temperature,
         auth: resolveAuth(input.app.config),
         originalEventId: state.originalEventId,
+        skills: state.skills ?? [],
+        containerId: state.containerId,
       });
     } finally {
       await releaseProcessingLock(executionId, state.turn, lockId);
@@ -331,6 +376,8 @@ export const agent: AppBlock = {
         temperature: state.temperature,
         auth: resolveAuth(input.app.config),
         originalEventId: state.originalEventId,
+        skills: state.skills ?? [],
+        containerId: state.containerId,
       });
     } finally {
       await releaseProcessingLock(executionId, state.turn, lockId);

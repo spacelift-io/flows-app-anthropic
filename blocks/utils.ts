@@ -7,6 +7,10 @@ import {
   defaultModelFor,
   resolveAuth,
 } from "./client";
+import {
+  BUILTIN_BETAS_GENERATE_MESSAGE,
+  SKILLS_BETAS,
+} from "../anthropicOptions";
 
 interface ToolDefinition {
   blockId: string;
@@ -40,7 +44,17 @@ interface CallState {
   thinkingBudget: number | undefined;
   temperature: number | undefined;
   originalEventId: string;
+  skills: SkillParam[];
+  containerId?: string;
 }
+
+interface SkillParam {
+  skill_id: string;
+  type: "anthropic" | "custom";
+  version: string;
+}
+
+const MAX_PAUSE_CONTINUATIONS = 5;
 
 export function joinToolNames(
   toolCalls: Anthropic.Beta.Messages.BetaToolUseBlock[],
@@ -72,6 +86,8 @@ export function streamMessage(params: {
   force: boolean | string;
   thinking?: boolean | undefined;
   thinkingBudget?: number | undefined;
+  skills?: SkillParam[];
+  containerId?: string;
 }) {
   const {
     auth,
@@ -85,13 +101,33 @@ export function streamMessage(params: {
     force,
     thinking,
     thinkingBudget,
+    skills = [],
+    containerId,
   } = params;
 
   const shouldCallSpecificTool = tools.length > 0 && typeof force === "string";
   const shouldCallAnyTool = tools.length > 0 && force === true;
   const hasMCPServers = mcpServers && mcpServers.length > 0;
+  const hasSkills = skills.length > 0;
 
   const client = createClient(auth);
+
+  const allTools: Anthropic.Beta.Messages.BetaToolUnion[] = [
+    ...tools,
+    ...(hasSkills
+      ? [
+          {
+            type: "code_execution_20250825" as const,
+            name: "code_execution" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const betas: string[] = [
+    ...(auth.kind === "bedrock" ? [] : BUILTIN_BETAS_GENERATE_MESSAGE),
+    ...(hasSkills ? SKILLS_BETAS : []),
+  ];
 
   return client.beta.messages.stream({
     max_tokens: maxTokens,
@@ -99,7 +135,7 @@ export function streamMessage(params: {
     system: systemPrompt,
     model,
     messages,
-    tools,
+    tools: allTools,
     thinking:
       thinking && thinkingBudget
         ? {
@@ -140,7 +176,8 @@ export function streamMessage(params: {
                 disable_parallel_tool_use: hasMCPServers,
               }
         : undefined,
-    betas: auth.kind === "bedrock" ? undefined : ["mcp-client-2025-04-04"],
+    container: hasSkills ? { id: containerId, skills } : undefined,
+    ...(betas.length > 0 ? { betas } : {}),
   });
 }
 
@@ -171,6 +208,23 @@ export function validateConfig(
     );
   }
 
+  const skills: SkillParam[] = ((inputConfig.skills ?? []) as string[]).map(
+    (s) => {
+      const [skillId, version] = s.split(":");
+      return {
+        skill_id: skillId,
+        type: skillId.startsWith("skill_")
+          ? ("custom" as const)
+          : ("anthropic" as const),
+        version: version ?? "latest",
+      };
+    },
+  );
+
+  if (auth.kind === "bedrock" && skills.length > 0) {
+    throw new Error("Skills are not supported on the AWS Bedrock backend.");
+  }
+
   return {
     model,
     auth,
@@ -187,6 +241,7 @@ export function validateConfig(
       | undefined,
     maxRetries: (inputConfig.maxRetries ?? 1) as number,
     temperature: inputConfig.temperature as number | undefined,
+    skills,
   };
 }
 
@@ -449,6 +504,8 @@ export async function storeCallState(params: {
   thinkingBudget: number | undefined;
   temperature: number | undefined;
   originalEventId: string;
+  skills: SkillParam[];
+  containerId?: string;
 }) {
   const { eventId, toolCalls, ...rest } = params;
 
@@ -566,6 +623,8 @@ export async function continueTurn(params: {
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
 }): Promise<void> {
   const {
     eventId,
@@ -587,6 +646,8 @@ export async function continueTurn(params: {
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -635,6 +696,8 @@ export async function continueTurn(params: {
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
   });
 }
 
@@ -657,6 +720,9 @@ export async function handleModelResponse(params: {
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
+  continuations?: number;
 }): Promise<void> {
   const {
     message,
@@ -677,6 +743,9 @@ export async function handleModelResponse(params: {
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
+    continuations = 0,
   } = params;
 
   const { toolNames, toolBlockIds } = processToolDefinitions(toolDefinitions);
@@ -773,9 +842,49 @@ export async function handleModelResponse(params: {
       thinkingBudget,
       temperature,
       originalEventId: eventId,
+      skills,
+      containerId: message.container?.id ?? containerId,
     });
 
     return setTimeoutTimer(eventId);
+  }
+
+  if (message.stop_reason === "pause_turn") {
+    if (continuations >= MAX_PAUSE_CONTINUATIONS) {
+      await events.cancelPending(pendingId, "Exceeded maximum continuations");
+      await deleteCallState(eventId);
+      return;
+    }
+
+    await events.updatePending(pendingId, {
+      statusDescription: "Processing...",
+    });
+
+    return executeTurn({
+      pendingId,
+      eventId,
+      blockId,
+      messages: [
+        ...previousMessages,
+        { role: message.role, content: message.content },
+      ],
+      toolDefinitions,
+      force,
+      model,
+      maxTokens,
+      mcpServers,
+      systemPrompt,
+      turn,
+      auth,
+      maxRetries,
+      schema,
+      thinking,
+      thinkingBudget,
+      temperature,
+      skills,
+      containerId: message.container?.id ?? containerId,
+      continuations: continuations + 1,
+    });
   }
 
   await events.cancelPending(pendingId, "Unexpected response from model");
@@ -800,6 +909,9 @@ export async function executeTurn(params: {
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
   temperature: number | undefined;
+  skills: SkillParam[];
+  containerId?: string;
+  continuations?: number;
 }): Promise<void> {
   const {
     pendingId,
@@ -819,6 +931,9 @@ export async function executeTurn(params: {
     thinking,
     thinkingBudget,
     temperature,
+    skills,
+    containerId,
+    continuations,
   } = params;
 
   let retryCount = 0;
@@ -846,6 +961,8 @@ export async function executeTurn(params: {
         thinking,
         thinkingBudget,
         temperature,
+        skills,
+        containerId,
       });
 
       await syncPendingEventWithStream(pendingId, stream);
@@ -871,6 +988,9 @@ export async function executeTurn(params: {
         thinking,
         thinkingBudget,
         temperature,
+        skills,
+        containerId,
+        continuations,
       });
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
