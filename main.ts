@@ -7,6 +7,7 @@ import { agent } from "./blocks/agent";
 import { agentToolResult } from "./blocks/agentToolResult";
 import { createClient, defaultModelFor, resolveAuth } from "./blocks/client";
 import { httpRequest } from "./blocks/httpRequest";
+import { EXTRA_BETAS_FIELD } from "./anthropicOptions";
 
 export const app = defineApp({
   name: "Anthropic AI",
@@ -72,6 +73,7 @@ export const app = defineApp({
       type: "string",
       required: false,
     },
+    extraBetas: EXTRA_BETAS_FIELD,
   },
   blocks: {
     agent,
