@@ -12,6 +12,7 @@ import {
   isRetryableError,
   MIN_RETRY_HEADROOM_MS,
   SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
+  INVOCATION_LOCK_TIMEOUT_SECONDS,
 } from "../streamGuard";
 
 interface ToolDefinition {
@@ -922,8 +923,7 @@ export async function tryAcquireProcessingLock(
   return kv.block.set({
     key: `process-${executionId}-${turn}`,
     value: { lockId },
-    // Longer than the invocation budget, so the lock can't lapse mid-turn.
-    lock: { id: lockId, timeout: 360 },
+    lock: { id: lockId, timeout: INVOCATION_LOCK_TIMEOUT_SECONDS },
   });
 }
 

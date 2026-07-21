@@ -14,6 +14,10 @@ export const SERVER_TOOL_INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
 // Minimum budget left for a retry attempt to be worth starting.
 export const MIN_RETRY_HEADROOM_MS = 45 * 1000;
 
+// KV locks guarding an in-flight invocation must outlive its budget.
+export const INVOCATION_LOCK_TIMEOUT_SECONDS =
+  INVOCATION_BUDGET_MS / 1000 + 2 * 60;
+
 export class StreamTimeoutError extends Error {
   constructor(inactivityTimeoutMs: number) {
     super(

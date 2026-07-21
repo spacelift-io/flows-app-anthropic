@@ -16,6 +16,7 @@ import {
   isRetryableError,
   MIN_RETRY_HEADROOM_MS,
   SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
+  INVOCATION_LOCK_TIMEOUT_SECONDS,
 } from "./streamGuard";
 
 interface ToolDefinition {
@@ -1074,8 +1075,7 @@ export async function setTimerLock(eventId: string): Promise<void> {
   await kv.block.set({
     key: `lock-${eventId}`,
     value: true,
-    // Longer than the invocation budget, so the lock can't lapse mid-turn.
-    ttl: 60 * 6,
+    ttl: INVOCATION_LOCK_TIMEOUT_SECONDS,
   });
 }
 
