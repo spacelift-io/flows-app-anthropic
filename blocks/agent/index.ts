@@ -15,6 +15,7 @@ import {
   getToolDefinitionOutputKey,
 } from "./utils";
 import { resolveAuth, createClient } from "../client";
+import { createInvocationDeadline } from "../streamGuard";
 import { randomUUID } from "node:crypto";
 
 export const agent: AppBlock = {
@@ -244,6 +245,7 @@ export const agent: AppBlock = {
           temperature,
           originalEventId: input.event.id,
           skills,
+          deadlineAt: createInvocationDeadline(),
         });
       },
     },
@@ -313,6 +315,7 @@ export const agent: AppBlock = {
         originalEventId: state.originalEventId,
         skills: state.skills ?? [],
         containerId: state.containerId,
+        deadlineAt: createInvocationDeadline(),
       });
     } finally {
       await releaseProcessingLock(executionId, state.turn, lockId);
@@ -378,6 +381,7 @@ export const agent: AppBlock = {
         originalEventId: state.originalEventId,
         skills: state.skills ?? [],
         containerId: state.containerId,
+        deadlineAt: createInvocationDeadline(),
       });
     } finally {
       await releaseProcessingLock(executionId, state.turn, lockId);

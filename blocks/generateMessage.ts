@@ -14,6 +14,7 @@ import {
   clearTimerLock,
 } from "./utils";
 import { resolveAuth, createClient } from "./client";
+import { createInvocationDeadline } from "./streamGuard";
 
 export const generateMessage: AppBlock = {
   name: "Generate message",
@@ -258,6 +259,7 @@ export const generateMessage: AppBlock = {
           thinkingBudget,
           temperature,
           skills,
+          deadlineAt: createInvocationDeadline(),
         });
       },
     },
@@ -353,6 +355,7 @@ export const generateMessage: AppBlock = {
       skills,
       containerId,
       blockId: input.block.id,
+      deadlineAt: createInvocationDeadline(),
     });
 
     await clearTimerLock(eventId);
@@ -431,6 +434,7 @@ export const generateMessage: AppBlock = {
       skills,
       containerId,
       blockId: input.block.id,
+      deadlineAt: createInvocationDeadline(),
     });
   },
 };

@@ -11,6 +11,11 @@ import {
   BUILTIN_BETAS_GENERATE_MESSAGE,
   SKILLS_BETAS,
 } from "../anthropicOptions";
+import {
+  startStreamGuard,
+  isRetryableError,
+  MIN_RETRY_HEADROOM_MS,
+} from "./streamGuard";
 
 interface ToolDefinition {
   blockId: string;
@@ -88,6 +93,7 @@ export function streamMessage(params: {
   thinkingBudget?: number | undefined;
   skills?: SkillParam[];
   containerId?: string;
+  signal: AbortSignal;
 }) {
   const {
     auth,
@@ -103,6 +109,7 @@ export function streamMessage(params: {
     thinkingBudget,
     skills = [],
     containerId,
+    signal,
   } = params;
 
   const shouldCallSpecificTool = tools.length > 0 && typeof force === "string";
@@ -124,61 +131,64 @@ export function streamMessage(params: {
       : []),
   ];
 
-  const betas: string[] = [
+  const allBetas: string[] = [
     ...(auth.kind === "bedrock" ? [] : BUILTIN_BETAS_GENERATE_MESSAGE),
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
-  return client.beta.messages.stream({
-    max_tokens: maxTokens,
-    temperature,
-    system: systemPrompt,
-    model,
-    messages,
-    tools: allTools,
-    thinking:
-      thinking && thinkingBudget
-        ? {
-            type: "enabled",
-            budget_tokens: thinkingBudget,
-          }
-        : undefined,
-    mcp_servers: hasMCPServers
-      ? mcpServers.map(
-          (server) =>
-            ({
-              name: server.name,
-              type: server.type,
-              url: server.url,
-              authorization_token: server.authorizationToken,
-              tool_configuration: {
-                allowed_tools: server.allowedTools,
-              },
-            }) satisfies Anthropic.Beta.Messages.BetaRequestMCPServerURLDefinition,
-        )
-      : undefined,
-    tool_choice:
-      tools.length > 0
-        ? shouldCallSpecificTool
+  return client.beta.messages.stream(
+    {
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      model,
+      messages,
+      tools: allTools,
+      thinking:
+        thinking && thinkingBudget
           ? {
-              type: "tool",
-              name: force as string,
-              // The model cannot handle parallel tool use when MCP servers are used.
-              disable_parallel_tool_use: hasMCPServers,
+              type: "enabled",
+              budget_tokens: thinkingBudget,
             }
-          : shouldCallAnyTool
-            ? {
-                type: "any",
-                disable_parallel_tool_use: hasMCPServers,
-              }
-            : {
-                type: "auto",
-                disable_parallel_tool_use: hasMCPServers,
-              }
+          : undefined,
+      mcp_servers: hasMCPServers
+        ? mcpServers.map(
+            (server) =>
+              ({
+                name: server.name,
+                type: server.type,
+                url: server.url,
+                authorization_token: server.authorizationToken,
+                tool_configuration: {
+                  allowed_tools: server.allowedTools,
+                },
+              }) satisfies Anthropic.Beta.Messages.BetaRequestMCPServerURLDefinition,
+          )
         : undefined,
-    container: hasSkills ? { id: containerId, skills } : undefined,
-    ...(betas.length > 0 ? { betas } : {}),
-  });
+      tool_choice:
+        tools.length > 0
+          ? shouldCallSpecificTool
+            ? {
+                type: "tool",
+                name: force as string,
+                // The model cannot handle parallel tool use when MCP servers are used.
+                disable_parallel_tool_use: hasMCPServers,
+              }
+            : shouldCallAnyTool
+              ? {
+                  type: "any",
+                  disable_parallel_tool_use: hasMCPServers,
+                }
+              : {
+                  type: "auto",
+                  disable_parallel_tool_use: hasMCPServers,
+                }
+          : undefined,
+      container: hasSkills ? { id: containerId, skills } : undefined,
+      ...(allBetas.length > 0 ? { betas: allBetas } : {}),
+    },
+    { signal },
+  );
 }
 
 export function validateConfig(
@@ -344,6 +354,7 @@ export async function generateObject(
     inputTokens: number;
     outputTokens: number;
     parentEventId: string;
+    deadlineAt: number;
   },
 ): Promise<void> {
   const {
@@ -355,6 +366,7 @@ export async function generateObject(
     maxRetries,
     pendingId,
     parentEventId,
+    deadlineAt,
   } = params;
 
   let retryCount = 0;
@@ -363,6 +375,12 @@ export async function generateObject(
   let lastError: Error | undefined;
 
   while (retryCount < maxRetries) {
+    if (retryCount > 0 && deadlineAt - Date.now() < MIN_RETRY_HEADROOM_MS) {
+      break;
+    }
+
+    const guard = startStreamGuard(deadlineAt);
+
     try {
       await events.updatePending(pendingId, {
         statusDescription:
@@ -403,7 +421,9 @@ export async function generateObject(
         mcpServers: [],
         force: "json",
         auth,
+        signal: guard.signal,
       });
+      guard.watch(stream);
 
       const message = await stream.finalMessage();
 
@@ -438,13 +458,16 @@ export async function generateObject(
 
       retryCount++;
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = guard.interpretError(error);
       retryCount++;
 
-      // If this was the last retry, we'll exit the loop and handle the error below
-      if (retryCount >= maxRetries) {
+      // If the error isn't transient or this was the last retry, we'll exit
+      // the loop and handle the error below
+      if (!isRetryableError(lastError) || retryCount >= maxRetries) {
         break;
       }
+    } finally {
+      guard.stop();
     }
   }
 
@@ -625,6 +648,7 @@ export async function continueTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
 }): Promise<void> {
   const {
     eventId,
@@ -648,6 +672,7 @@ export async function continueTurn(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -698,6 +723,7 @@ export async function continueTurn(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
   });
 }
 
@@ -722,6 +748,7 @@ export async function handleModelResponse(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
   continuations?: number;
 }): Promise<void> {
   const {
@@ -745,6 +772,7 @@ export async function handleModelResponse(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
     continuations = 0,
   } = params;
 
@@ -776,6 +804,7 @@ export async function handleModelResponse(params: {
         inputTokens: message.usage.input_tokens,
         outputTokens: message.usage.output_tokens,
         parentEventId: eventId,
+        deadlineAt,
       });
     }
 
@@ -883,6 +912,7 @@ export async function handleModelResponse(params: {
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
+      deadlineAt,
       continuations: continuations + 1,
     });
   }
@@ -911,6 +941,7 @@ export async function executeTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
   continuations?: number;
 }): Promise<void> {
   const {
@@ -933,6 +964,7 @@ export async function executeTurn(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
     continuations,
   } = params;
 
@@ -940,6 +972,8 @@ export async function executeTurn(params: {
   let lastError: Error | undefined;
 
   while (retryCount < maxRetries) {
+    const guard = startStreamGuard(deadlineAt);
+
     try {
       if (retryCount > 0) {
         await events.updatePending(pendingId, {
@@ -963,7 +997,9 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        signal: guard.signal,
       });
+      guard.watch(stream);
 
       await syncPendingEventWithStream(pendingId, stream);
 
@@ -990,30 +1026,27 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        deadlineAt,
         continuations,
       });
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = guard.interpretError(error);
       retryCount++;
 
-      // Check if this is a retryable error (overloaded, rate limit, etc.)
-      const errorMessage = lastError.message.toLowerCase();
-      const isRetryable =
-        errorMessage.includes("overloaded") ||
-        errorMessage.includes("rate limit") ||
-        errorMessage.includes("timeout") ||
-        errorMessage.includes("502") ||
-        errorMessage.includes("503") ||
-        errorMessage.includes("504");
-
-      // If not retryable or this was the last retry, exit
-      if (!isRetryable || retryCount >= maxRetries) {
+      // If the error isn't transient or this was the last retry, exit
+      if (!isRetryableError(lastError) || retryCount >= maxRetries) {
         break;
       }
 
-      // Wait a bit before retrying (exponential backoff)
+      // Wait a bit before retrying (exponential backoff), but only when the
+      // invocation budget leaves enough room for the retry to finish
       const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000);
+      if (deadlineAt - Date.now() < delay + MIN_RETRY_HEADROOM_MS) {
+        break;
+      }
       await new Promise((resolve) => setTimeout(resolve, delay));
+    } finally {
+      guard.stop();
     }
   }
 
@@ -1035,7 +1068,8 @@ export async function setTimerLock(eventId: string): Promise<void> {
   await kv.block.set({
     key: `lock-${eventId}`,
     value: true,
-    ttl: 60 * 5,
+    // Longer than the invocation budget, so the lock can't lapse mid-turn.
+    ttl: 60 * 6,
   });
 }
 
