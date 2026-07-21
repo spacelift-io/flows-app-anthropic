@@ -62,8 +62,7 @@ export function isRetryableError(error: Error) {
   }
 
   if (error instanceof Anthropic.APIError) {
-    // No status = connection error; otherwise the statuses the SDK itself
-    // retries.
+    // No status = connection error; the rest are the statuses the SDK retries.
     return (
       error.status === undefined ||
       error.status === 408 ||
@@ -88,17 +87,6 @@ interface GuardableStream {
 }
 
 // Aborts a model stream when it goes silent or the invocation budget runs out.
-//
-//   const guard = startStreamGuard(deadlineAt);
-//   try {
-//     const stream = streamMessage({ ..., signal: guard.signal });
-//     guard.watch(stream);
-//     ... consume the stream ...
-//   } catch (error) {
-//     throw guard.interpretError(error);
-//   } finally {
-//     guard.stop();
-//   }
 export function startStreamGuard(
   deadlineAt: number,
   inactivityTimeoutMs = INACTIVITY_TIMEOUT_MS,
@@ -133,7 +121,6 @@ export function startStreamGuard(
     touch();
   }
 
-  // Feeds the watchdog and tracks whether a complete message arrived.
   const observe = (
     event: Anthropic.Beta.Messages.BetaRawMessageStreamEvent,
   ) => {
@@ -150,8 +137,7 @@ export function startStreamGuard(
       stream.on("streamEvent", observe);
 
       // Without these the SDK turns a stream failure into a global unhandled
-      // rejection, which kills the shared runtime process. The caller still
-      // gets the error from the rejected consumption.
+      // rejection, which kills the shared runtime process.
       stream.on("abort", () => {});
       stream.on("error", () => {});
     },
@@ -161,8 +147,6 @@ export function startStreamGuard(
       clearTimeout(budgetTimer);
     },
 
-    // Maps a consumption error: guard fired → timeout/budget error; non-HTTP
-    // failure before message_stop → truncation; anything else → as-is.
     interpretError(error: unknown) {
       if (timedOut) {
         return timedOut === "budget"
