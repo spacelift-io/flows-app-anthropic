@@ -102,6 +102,9 @@ export function startStreamGuard(
   let sawMessageStop = false;
 
   const abort = (kind: "inactivity" | "budget") => {
+    if (timedOut) {
+      return;
+    }
     timedOut = kind;
     controller.abort();
   };
