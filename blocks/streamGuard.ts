@@ -153,9 +153,17 @@ export function startStreamGuard(
           ? new InvocationBudgetExceededError()
           : new StreamTimeoutError(inactivityTimeoutMs);
       }
-      if (!sawMessageStop && !(error instanceof Anthropic.APIError)) {
+
+      // The SDK normalizes every stream failure to AnthropicError before it
+      // reaches consumers, so other errors can't be stream-related.
+      if (
+        !sawMessageStop &&
+        error instanceof Anthropic.AnthropicError &&
+        !(error instanceof Anthropic.APIError)
+      ) {
         return new StreamTruncatedError();
       }
+
       return error instanceof Error ? error : new Error(String(error));
     },
   };
