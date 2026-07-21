@@ -15,6 +15,7 @@ import {
   startStreamGuard,
   isRetryableError,
   MIN_RETRY_HEADROOM_MS,
+  SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
 } from "./streamGuard";
 
 interface ToolDefinition {
@@ -972,7 +973,12 @@ export async function executeTurn(params: {
   let lastError: Error | undefined;
 
   while (retryCount < maxRetries) {
-    const guard = startStreamGuard(deadlineAt);
+    const guard = startStreamGuard(
+      deadlineAt,
+      mcpServers.length > 0 || skills.length > 0
+        ? SERVER_TOOL_INACTIVITY_TIMEOUT_MS
+        : undefined,
+    );
 
     try {
       if (retryCount > 0) {

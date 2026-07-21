@@ -7,13 +7,17 @@ const INVOCATION_BUDGET_MS = 4 * 60 * 1000;
 // A healthy stream emits events continuously; this much silence means it died.
 const INACTIVITY_TIMEOUT_MS = 60 * 1000;
 
+// Remote MCP and code execution run server-side with no stream events (only
+// pings, which the SDK filters out), so long silence there can be healthy.
+export const SERVER_TOOL_INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
+
 // Minimum budget left for a retry attempt to be worth starting.
 export const MIN_RETRY_HEADROOM_MS = 45 * 1000;
 
 export class StreamTimeoutError extends Error {
-  constructor() {
+  constructor(inactivityTimeoutMs: number) {
     super(
-      `Model stream stalled: no data received for ${INACTIVITY_TIMEOUT_MS / 1000} seconds`,
+      `Model stream stalled: no data received for ${inactivityTimeoutMs / 1000} seconds`,
     );
     this.name = "StreamTimeoutError";
   }
@@ -95,7 +99,10 @@ interface GuardableStream {
 //   } finally {
 //     guard.stop();
 //   }
-export function startStreamGuard(deadlineAt: number) {
+export function startStreamGuard(
+  deadlineAt: number,
+  inactivityTimeoutMs = INACTIVITY_TIMEOUT_MS,
+) {
   const controller = new AbortController();
   let inactivityTimer: NodeJS.Timeout | undefined;
   let budgetTimer: NodeJS.Timeout | undefined;
@@ -114,7 +121,7 @@ export function startStreamGuard(deadlineAt: number) {
     clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(
       () => abort("inactivity"),
-      INACTIVITY_TIMEOUT_MS,
+      inactivityTimeoutMs,
     );
   };
 
@@ -160,7 +167,7 @@ export function startStreamGuard(deadlineAt: number) {
       if (timedOut) {
         return timedOut === "budget"
           ? new InvocationBudgetExceededError()
-          : new StreamTimeoutError();
+          : new StreamTimeoutError(inactivityTimeoutMs);
       }
       if (!sawMessageStop && !(error instanceof Anthropic.APIError)) {
         return new StreamTruncatedError();
