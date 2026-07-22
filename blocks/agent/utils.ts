@@ -7,6 +7,13 @@ import {
   resolveAuth,
 } from "../client";
 import { BUILTIN_BETAS_AGENT, SKILLS_BETAS } from "../../anthropicOptions";
+import {
+  startStreamGuard,
+  isRetryableError,
+  MIN_RETRY_HEADROOM_MS,
+  SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
+  INVOCATION_LOCK_TIMEOUT_SECONDS,
+} from "../streamGuard";
 
 interface ToolDefinition {
   name: string;
@@ -98,6 +105,7 @@ function streamMessage(params: {
   schema?: Anthropic.Messages.Tool.InputSchema | undefined;
   skills: SkillParam[];
   containerId?: string;
+  signal: AbortSignal;
 }) {
   const {
     auth,
@@ -113,6 +121,7 @@ function streamMessage(params: {
     thinkingBudget,
     skills,
     containerId,
+    signal,
   } = params;
 
   const client = createClient(auth);
@@ -133,54 +142,57 @@ function streamMessage(params: {
       : []),
   ];
 
-  const betas: string[] = [
+  const allBetas: string[] = [
     ...BUILTIN_BETAS_AGENT,
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
-  return client.beta.messages.stream({
-    max_tokens: maxTokens,
-    temperature,
-    system: systemPrompt,
-    model,
-    messages,
-    tools: allTools,
-    thinking:
-      thinking && thinkingBudget
+  return client.beta.messages.stream(
+    {
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      model,
+      messages,
+      tools: allTools,
+      thinking:
+        thinking && thinkingBudget
+          ? {
+              type: "enabled",
+              budget_tokens: thinkingBudget,
+            }
+          : undefined,
+      tool_choice:
+        allTools.length > 0
+          ? shouldCallSpecificTool
+            ? {
+                type: "tool",
+                name: force as string,
+              }
+            : shouldCallAnyTool
+              ? {
+                  type: "any",
+                }
+              : {
+                  type: "auto",
+                }
+          : undefined,
+      output_config: schema
         ? {
-            type: "enabled",
-            budget_tokens: thinkingBudget,
+            format: {
+              type: "json_schema",
+              schema: {
+                ...schema,
+                additionalProperties: false,
+              },
+            },
           }
         : undefined,
-    tool_choice:
-      allTools.length > 0
-        ? shouldCallSpecificTool
-          ? {
-              type: "tool",
-              name: force as string,
-            }
-          : shouldCallAnyTool
-            ? {
-                type: "any",
-              }
-            : {
-                type: "auto",
-              }
-        : undefined,
-    output_config: schema
-      ? {
-          format: {
-            type: "json_schema",
-            schema: {
-              ...schema,
-              additionalProperties: false,
-            },
-          },
-        }
-      : undefined,
-    container: hasSkills ? { id: containerId, skills } : undefined,
-    betas,
-  });
+      container: hasSkills ? { id: containerId, skills } : undefined,
+      ...(allBetas.length > 0 ? { betas: allBetas } : {}),
+    },
+    { signal },
+  );
 }
 
 export function validateConfig(
@@ -401,7 +413,8 @@ export async function storeToolResult(params: {
         typeof result === "string" ? result : JSON.stringify(result ?? null),
       eventId,
     },
-    ttl: 60 * 5,
+    // Must outlive the processing lock; matches the call state TTL.
+    ttl: 60 * 60,
   });
 }
 
@@ -483,6 +496,7 @@ export async function continueTurn(params: {
   originalEventId: string;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
 }): Promise<void> {
   const {
     executionId,
@@ -507,6 +521,7 @@ export async function continueTurn(params: {
     originalEventId,
     skills,
     containerId,
+    deadlineAt,
   } = params;
 
   await events.updatePending(pendingId, {
@@ -558,6 +573,7 @@ export async function continueTurn(params: {
     originalEventId,
     skills,
     containerId,
+    deadlineAt,
   });
 }
 
@@ -583,6 +599,7 @@ async function handleModelResponse(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
   continuations?: number;
 }): Promise<void> {
   const {
@@ -607,6 +624,7 @@ async function handleModelResponse(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
     continuations = 0,
   } = params;
 
@@ -745,6 +763,7 @@ async function handleModelResponse(params: {
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
+      deadlineAt,
       continuations: continuations + 1,
     });
   }
@@ -774,6 +793,7 @@ export async function executeTurn(params: {
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
+  deadlineAt: number;
   continuations?: number;
 }): Promise<void> {
   const {
@@ -797,6 +817,7 @@ export async function executeTurn(params: {
     temperature,
     skills,
     containerId,
+    deadlineAt,
     continuations,
   } = params;
 
@@ -804,6 +825,11 @@ export async function executeTurn(params: {
   let lastError: Error | undefined;
 
   while (retryCount < maxRetries) {
+    const guard = startStreamGuard(
+      deadlineAt,
+      skills.length > 0 ? SERVER_TOOL_INACTIVITY_TIMEOUT_MS : undefined,
+    );
+
     try {
       if (retryCount > 0) {
         await events.updatePending(pendingId, {
@@ -827,7 +853,9 @@ export async function executeTurn(params: {
         schema,
         skills,
         containerId,
+        signal: guard.signal,
       });
+      guard.watch(stream);
 
       await syncPendingEventWithStream(pendingId, stream);
 
@@ -855,30 +883,27 @@ export async function executeTurn(params: {
         temperature,
         skills,
         containerId,
+        deadlineAt,
         continuations,
       });
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = guard.interpretError(error);
       retryCount++;
 
-      // Check if this is a retryable error (overloaded, rate limit, etc.)
-      const errorMessage = lastError.message.toLowerCase();
-      const isRetryable =
-        errorMessage.includes("overloaded") ||
-        errorMessage.includes("rate limit") ||
-        errorMessage.includes("timeout") ||
-        errorMessage.includes("502") ||
-        errorMessage.includes("503") ||
-        errorMessage.includes("504");
-
-      // If not retryable or this was the last retry, exit
-      if (!isRetryable || retryCount >= maxRetries) {
+      // If the error isn't transient or this was the last retry, exit
+      if (!isRetryableError(lastError) || retryCount >= maxRetries) {
         break;
       }
 
-      // Wait a bit before retrying (exponential backoff)
+      // Wait a bit before retrying (exponential backoff), but only when the
+      // invocation budget leaves enough room for the retry to finish
       const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000);
+      if (deadlineAt - Date.now() < delay + MIN_RETRY_HEADROOM_MS) {
+        break;
+      }
       await new Promise((resolve) => setTimeout(resolve, delay));
+    } finally {
+      guard.stop();
     }
   }
 
@@ -899,7 +924,7 @@ export async function tryAcquireProcessingLock(
   return kv.block.set({
     key: `process-${executionId}-${turn}`,
     value: { lockId },
-    lock: { id: lockId, timeout: 300 },
+    lock: { id: lockId, timeout: INVOCATION_LOCK_TIMEOUT_SECONDS },
   });
 }
 
