@@ -413,7 +413,8 @@ export async function storeToolResult(params: {
         typeof result === "string" ? result : JSON.stringify(result ?? null),
       eventId,
     },
-    ttl: 60 * 5,
+    // Must outlive the processing lock; matches the call state TTL.
+    ttl: 60 * 60,
   });
 }
 

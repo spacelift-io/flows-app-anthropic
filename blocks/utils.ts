@@ -571,7 +571,8 @@ export async function storeToolResult(params: {
       toolCallId,
       result,
     },
-    ttl: 60 * 5,
+    // Must outlive the timer lock; matches the call state TTL.
+    ttl: 60 * 60,
   });
 }
 
