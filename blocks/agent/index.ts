@@ -158,7 +158,21 @@ export const agent: AppBlock = {
               budget: {
                 title: "Budget",
                 type: "number",
-                description: "The number of tokens to use for thinking",
+                description:
+                  "The number of tokens to use for thinking. Only used by older models; models with adaptive thinking use the effort setting instead.",
+              },
+              effort: {
+                title: "Effort",
+                type: "string",
+                oneOf: [
+                  { const: "low", title: "Low" },
+                  { const: "medium", title: "Medium" },
+                  { const: "high", title: "High" },
+                  { const: "xhigh", title: "Extra high" },
+                  { const: "max", title: "Max" },
+                ],
+                description:
+                  "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by older models, which use the budget instead.",
               },
             },
             required: ["enabled", "budget"],
@@ -188,7 +202,7 @@ export const agent: AppBlock = {
         temperature: {
           name: "Temperature",
           description:
-            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic. Ignored by newer models (Opus 4.7+, Sonnet 5, Fable 5), which don't support a custom temperature.",
           type: "number",
           required: false,
         },
@@ -203,6 +217,7 @@ export const agent: AppBlock = {
           force,
           thinking,
           thinkingBudget,
+          effort,
           auth,
           schema,
           maxRetries,
@@ -242,6 +257,7 @@ export const agent: AppBlock = {
           schema,
           thinking,
           thinkingBudget,
+          effort,
           temperature,
           originalEventId: input.event.id,
           skills,
@@ -310,6 +326,7 @@ export const agent: AppBlock = {
         schema: state.schema,
         thinking: state.thinking,
         thinkingBudget: state.thinkingBudget,
+        effort: state.effort,
         temperature: state.temperature,
         auth: resolveAuth(input.app.config),
         originalEventId: state.originalEventId,
@@ -376,6 +393,7 @@ export const agent: AppBlock = {
         schema: state.schema,
         thinking: state.thinking,
         thinkingBudget: state.thinkingBudget,
+        effort: state.effort,
         temperature: state.temperature,
         auth: resolveAuth(input.app.config),
         originalEventId: state.originalEventId,
