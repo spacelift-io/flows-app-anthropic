@@ -77,7 +77,7 @@ export const generateMessage: AppBlock = {
         effort: {
           name: "Effort",
           description:
-            "Reasoning effort for models with adaptive thinking (Sonnet 5, Opus 4.6 and newer). Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Models without adaptive thinking ignore this and use the thinking budget instead.",
+            "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by models without adaptive thinking, which use the thinking budget instead.",
           type: {
             type: "string",
             oneOf: [

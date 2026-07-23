@@ -22,6 +22,7 @@ import {
   Effort,
   buildThinkingConfig,
   effortForModel,
+  rejectsXhighEffort,
   temperatureForModel,
   usesAdaptiveThinking,
 } from "./thinking";
@@ -223,6 +224,16 @@ export function validateConfig(
   ) {
     throw new Error(
       "You need to set thinking budget to a value less than max tokens",
+    );
+  }
+
+  if (
+    inputConfig.thinking &&
+    inputConfig.effort === "xhigh" &&
+    rejectsXhighEffort(model)
+  ) {
+    throw new Error(
+      "The `xhigh` effort level requires Opus 4.7+ or Sonnet 5. Choose a lower effort (or `max`) or switch to a newer model.",
     );
   }
 
