@@ -74,10 +74,27 @@ export const generateMessage: AppBlock = {
           required: false,
           default: true,
         },
-        thinkingBudget: {
-          name: "Thinking budget",
+        effort: {
+          name: "Effort",
           description:
-            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`.",
+            "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by models without adaptive thinking, which use the thinking budget instead.",
+          type: {
+            type: "string",
+            oneOf: [
+              { const: "low", title: "Low" },
+              { const: "medium", title: "Medium" },
+              { const: "high", title: "High" },
+              { const: "xhigh", title: "Extra high" },
+              { const: "max", title: "Max" },
+            ],
+          },
+          required: false,
+          default: "medium",
+        },
+        thinkingBudget: {
+          name: "Thinking budget (non-adaptive models)",
+          description:
+            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`. Only used by models without adaptive thinking; models with adaptive thinking use the effort setting instead.",
           type: "number",
           required: false,
           default: 2048,
@@ -167,7 +184,7 @@ export const generateMessage: AppBlock = {
         temperature: {
           name: "Temperature",
           description:
-            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic.",
+            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic. Ignored by newer models (Opus 4.7+, Sonnet 5, Fable 5), which don't support a custom temperature, and ignored whenever thinking is enabled.",
           type: "number",
           required: false,
         },
@@ -224,6 +241,7 @@ export const generateMessage: AppBlock = {
           force,
           thinking,
           thinkingBudget,
+          effort,
           auth,
           schema,
           maxRetries,
@@ -257,6 +275,7 @@ export const generateMessage: AppBlock = {
           schema,
           thinking,
           thinkingBudget,
+          effort,
           temperature,
           skills,
           deadlineAt: createInvocationDeadline(),
@@ -315,6 +334,7 @@ export const generateMessage: AppBlock = {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       skills,
       containerId,
@@ -350,6 +370,7 @@ export const generateMessage: AppBlock = {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       auth: resolveAuth(input.app.config),
       skills,
@@ -383,6 +404,7 @@ export const generateMessage: AppBlock = {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       skills,
       containerId,
@@ -429,6 +451,7 @@ export const generateMessage: AppBlock = {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       auth: resolveAuth(input.app.config),
       skills,

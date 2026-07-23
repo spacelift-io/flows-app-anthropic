@@ -18,6 +18,14 @@ import {
   SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
   INVOCATION_LOCK_TIMEOUT_SECONDS,
 } from "./streamGuard";
+import {
+  Effort,
+  buildThinkingConfig,
+  effortForModel,
+  rejectsXhighEffort,
+  temperatureForModel,
+  usesAdaptiveThinking,
+} from "./thinking";
 
 interface ToolDefinition {
   blockId: string;
@@ -49,6 +57,7 @@ interface CallState {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   originalEventId: string;
   skills: SkillParam[];
@@ -93,6 +102,7 @@ export function streamMessage(params: {
   force: boolean | string;
   thinking?: boolean | undefined;
   thinkingBudget?: number | undefined;
+  effort?: Effort | undefined;
   skills?: SkillParam[];
   containerId?: string;
   signal: AbortSignal;
@@ -109,6 +119,7 @@ export function streamMessage(params: {
     force,
     thinking,
     thinkingBudget,
+    effort,
     skills = [],
     containerId,
     signal,
@@ -138,21 +149,23 @@ export function streamMessage(params: {
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
+  const thinkingConfig = buildThinkingConfig(model, thinking, thinkingBudget);
+  const resolvedEffort = effortForModel(effort, thinkingConfig);
+  const resolvedTemperature = temperatureForModel(
+    model,
+    temperature,
+    thinkingConfig,
+  );
+
   return client.beta.messages.stream(
     {
       max_tokens: maxTokens,
-      temperature,
+      temperature: resolvedTemperature,
       system: systemPrompt,
       model,
       messages,
       tools: allTools,
-      thinking:
-        thinking && thinkingBudget
-          ? {
-              type: "enabled",
-              budget_tokens: thinkingBudget,
-            }
-          : undefined,
+      thinking: thinkingConfig,
       mcp_servers: hasMCPServers
         ? mcpServers.map(
             (server) =>
@@ -186,6 +199,7 @@ export function streamMessage(params: {
                   disable_parallel_tool_use: hasMCPServers,
                 }
           : undefined,
+      output_config: resolvedEffort ? { effort: resolvedEffort } : undefined,
       container: hasSkills ? { id: containerId, skills } : undefined,
       ...(allBetas.length > 0 ? { betas: allBetas } : {}),
     },
@@ -203,12 +217,23 @@ export function validateConfig(
     inputConfig.model ?? appConfig.defaultModel ?? defaultModelFor(auth);
 
   if (
+    !usesAdaptiveThinking(model) &&
     inputConfig.thinking &&
     (!inputConfig.thinkingBudget ||
       inputConfig.thinkingBudget >= inputConfig.maxTokens)
   ) {
     throw new Error(
       "You need to set thinking budget to a value less than max tokens",
+    );
+  }
+
+  if (
+    inputConfig.thinking &&
+    inputConfig.effort === "xhigh" &&
+    rejectsXhighEffort(model)
+  ) {
+    throw new Error(
+      "The `xhigh` effort level requires Opus 4.7+ or Sonnet 5. Choose a lower effort (or `max`) or switch to a newer model.",
     );
   }
 
@@ -248,6 +273,7 @@ export function validateConfig(
     force: inputConfig.force as boolean | string,
     thinking: inputConfig.thinking as boolean | undefined,
     thinkingBudget: inputConfig.thinkingBudget as number | undefined,
+    effort: inputConfig.effort as Effort | undefined,
     schema: inputConfig.schema as
       | Anthropic.Messages.Tool.InputSchema
       | undefined,
@@ -527,6 +553,7 @@ export async function storeCallState(params: {
   turn: number;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   originalEventId: string;
   skills: SkillParam[];
@@ -648,6 +675,7 @@ export async function continueTurn(params: {
   blockId: string;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -672,6 +700,7 @@ export async function continueTurn(params: {
     blockId,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -723,6 +752,7 @@ export async function continueTurn(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -748,6 +778,7 @@ export async function handleModelResponse(params: {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -772,6 +803,7 @@ export async function handleModelResponse(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -872,6 +904,7 @@ export async function handleModelResponse(params: {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       originalEventId: eventId,
       skills,
@@ -912,6 +945,7 @@ export async function handleModelResponse(params: {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
@@ -941,6 +975,7 @@ export async function executeTurn(params: {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -964,6 +999,7 @@ export async function executeTurn(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -1002,6 +1038,7 @@ export async function executeTurn(params: {
         auth,
         thinking,
         thinkingBudget,
+        effort,
         temperature,
         skills,
         containerId,
@@ -1031,6 +1068,7 @@ export async function executeTurn(params: {
         schema,
         thinking,
         thinkingBudget,
+        effort,
         temperature,
         skills,
         containerId,

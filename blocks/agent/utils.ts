@@ -14,6 +14,14 @@ import {
   SERVER_TOOL_INACTIVITY_TIMEOUT_MS,
   INVOCATION_LOCK_TIMEOUT_SECONDS,
 } from "../streamGuard";
+import {
+  Effort,
+  buildThinkingConfig,
+  effortForModel,
+  rejectsXhighEffort,
+  temperatureForModel,
+  usesAdaptiveThinking,
+} from "../thinking";
 
 interface ToolDefinition {
   name: string;
@@ -45,6 +53,7 @@ interface CallState {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   originalEventId: string;
   skills: SkillParam[];
@@ -102,6 +111,7 @@ function streamMessage(params: {
   force: boolean | string;
   thinking?: boolean | undefined;
   thinkingBudget?: number | undefined;
+  effort?: Effort | undefined;
   schema?: Anthropic.Messages.Tool.InputSchema | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -119,6 +129,7 @@ function streamMessage(params: {
     force,
     thinking,
     thinkingBudget,
+    effort,
     skills,
     containerId,
     signal,
@@ -147,21 +158,23 @@ function streamMessage(params: {
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
+  const thinkingConfig = buildThinkingConfig(model, thinking, thinkingBudget);
+  const resolvedEffort = effortForModel(effort, thinkingConfig);
+  const resolvedTemperature = temperatureForModel(
+    model,
+    temperature,
+    thinkingConfig,
+  );
+
   return client.beta.messages.stream(
     {
       max_tokens: maxTokens,
-      temperature,
+      temperature: resolvedTemperature,
       system: systemPrompt,
       model,
       messages,
       tools: allTools,
-      thinking:
-        thinking && thinkingBudget
-          ? {
-              type: "enabled",
-              budget_tokens: thinkingBudget,
-            }
-          : undefined,
+      thinking: thinkingConfig,
       tool_choice:
         allTools.length > 0
           ? shouldCallSpecificTool
@@ -177,17 +190,23 @@ function streamMessage(params: {
                   type: "auto",
                 }
           : undefined,
-      output_config: schema
-        ? {
-            format: {
-              type: "json_schema",
-              schema: {
-                ...schema,
-                additionalProperties: false,
-              },
-            },
-          }
-        : undefined,
+      output_config:
+        schema || resolvedEffort
+          ? {
+              ...(schema
+                ? {
+                    format: {
+                      type: "json_schema" as const,
+                      schema: {
+                        ...schema,
+                        additionalProperties: false,
+                      },
+                    },
+                  }
+                : {}),
+              ...(resolvedEffort ? { effort: resolvedEffort } : {}),
+            }
+          : undefined,
       container: hasSkills ? { id: containerId, skills } : undefined,
       ...(allBetas.length > 0 ? { betas: allBetas } : {}),
     },
@@ -206,12 +225,23 @@ export function validateConfig(
     staticConfig.model ?? appConfig.defaultModel ?? defaultModelFor(auth);
 
   if (
+    !usesAdaptiveThinking(model) &&
     inputConfig.thinking?.enabled &&
     (!inputConfig.thinking?.budget ||
       inputConfig.thinking?.budget >= inputConfig.maxTokens)
   ) {
     throw new Error(
       "You need to set thinking budget to a value less than max tokens",
+    );
+  }
+
+  if (
+    inputConfig.thinking?.enabled &&
+    inputConfig.thinking?.effort === "xhigh" &&
+    rejectsXhighEffort(model)
+  ) {
+    throw new Error(
+      "The `xhigh` effort level requires Opus 4.7+ or Sonnet 5. Choose a lower effort (or `max`) or switch to a newer model.",
     );
   }
 
@@ -242,6 +272,7 @@ export function validateConfig(
     force: inputConfig.force as boolean | string,
     thinking: inputConfig.thinking?.enabled as boolean | undefined,
     thinkingBudget: inputConfig.thinking?.budget as number | undefined,
+    effort: inputConfig.thinking?.effort as Effort | undefined,
     schema: staticConfig.outputSchema as
       | Anthropic.Messages.Tool.InputSchema
       | undefined,
@@ -370,6 +401,7 @@ async function storeCallState(params: {
   turn: number;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -492,6 +524,7 @@ export async function continueTurn(params: {
   auth: AnthropicAuth;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   originalEventId: string;
   skills: SkillParam[];
@@ -517,6 +550,7 @@ export async function continueTurn(params: {
     auth,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     originalEventId,
     skills,
@@ -569,6 +603,7 @@ export async function continueTurn(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     originalEventId,
     skills,
@@ -596,6 +631,7 @@ async function handleModelResponse(params: {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -621,6 +657,7 @@ async function handleModelResponse(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -719,6 +756,7 @@ async function handleModelResponse(params: {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       originalEventId,
       skills,
@@ -760,6 +798,7 @@ async function handleModelResponse(params: {
       schema,
       thinking,
       thinkingBudget,
+      effort,
       temperature,
       skills,
       containerId: message.container?.id ?? containerId,
@@ -790,6 +829,7 @@ export async function executeTurn(params: {
   schema: Anthropic.Messages.Tool.InputSchema | undefined;
   thinking: boolean | undefined;
   thinkingBudget: number | undefined;
+  effort: Effort | undefined;
   temperature: number | undefined;
   skills: SkillParam[];
   containerId?: string;
@@ -814,6 +854,7 @@ export async function executeTurn(params: {
     schema,
     thinking,
     thinkingBudget,
+    effort,
     temperature,
     skills,
     containerId,
@@ -849,6 +890,7 @@ export async function executeTurn(params: {
         auth,
         thinking,
         thinkingBudget,
+        effort,
         temperature,
         schema,
         skills,
@@ -880,6 +922,7 @@ export async function executeTurn(params: {
         schema,
         thinking,
         thinkingBudget,
+        effort,
         temperature,
         skills,
         containerId,
