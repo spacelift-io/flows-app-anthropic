@@ -166,13 +166,13 @@ export const agent: AppBlock = {
                   { const: "max", title: "Max" },
                 ],
                 description:
-                  "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by older models, which use the budget instead.",
+                  "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by models without adaptive thinking, which use the budget instead.",
               },
               budget: {
-                title: "Budget",
+                title: "Budget (non-adaptive models)",
                 type: "number",
                 description:
-                  "The number of tokens to use for thinking. Only used by older models; models with adaptive thinking use the effort setting instead.",
+                  "The number of tokens to use for thinking. Only used by models without adaptive thinking; models with adaptive thinking use the effort setting instead.",
               },
             },
             required: ["enabled"],

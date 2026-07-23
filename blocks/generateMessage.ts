@@ -77,7 +77,7 @@ export const generateMessage: AppBlock = {
         effort: {
           name: "Effort",
           description:
-            "Reasoning effort for models with adaptive thinking (Sonnet 5, Opus 4.6 and newer). Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Older models ignore this and use the thinking budget instead.",
+            "Reasoning effort for models with adaptive thinking (Sonnet 5, Opus 4.6 and newer). Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Models without adaptive thinking ignore this and use the thinking budget instead.",
           type: {
             type: "string",
             oneOf: [
@@ -92,9 +92,9 @@ export const generateMessage: AppBlock = {
           default: "medium",
         },
         thinkingBudget: {
-          name: "Thinking budget",
+          name: "Thinking budget (non-adaptive models)",
           description:
-            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`. Only used by older models; models with adaptive thinking use the effort setting instead.",
+            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`. Only used by models without adaptive thinking; models with adaptive thinking use the effort setting instead.",
           type: "number",
           required: false,
           default: 2048,
