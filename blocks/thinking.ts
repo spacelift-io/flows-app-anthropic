@@ -7,12 +7,9 @@ function matchesAny(model: string, ids: string[]): boolean {
   return ids.some((id) => normalized.includes(id));
 }
 
-// Models that still use the legacy fixed thinking budget (`thinking.budget_tokens`)
-// and reject adaptive thinking / `output_config.effort`. Anything not listed —
-// including future models — is treated as adaptive, which is the forward-compatible
-// default (it's easier to enumerate the shrinking set of old models than to predict
-// new ones). The SDK only exposes model capabilities via a network call to the
-// Models API, so we keep this static list instead.
+// Older models that use a fixed thinking budget instead of newer "adaptive" thinking.
+// Anything not listed - including future models - is treated as adaptive, since it's
+// easier to track the shrinking set of old models than to predict new ones.
 const LEGACY_THINKING_MODELS = [
   "claude-3",
   "claude-opus-4-0",
@@ -23,13 +20,10 @@ const LEGACY_THINKING_MODELS = [
   "claude-haiku-4-5",
 ];
 
-// Models where thinking is always on and an explicit `{ type: "disabled" }` is
-// rejected — for these we omit the thinking field instead of disabling it.
+// Thinking is always on and an explicit `{ type: "disabled" }` is rejected, so omit it.
 const ALWAYS_ON_THINKING_MODELS = ["claude-fable-5", "claude-mythos-5"];
 
-// Models that still accept a non-default `temperature`. Newer models (Opus 4.7+,
-// Sonnet 5, Fable/Mythos 5) reject sampling params with a 400, so we default to
-// dropping temperature and only send it for these known-good older models.
+// Models that still accept a non-default `temperature`; newer ones reject it with a 400.
 const TEMPERATURE_MODELS = [
   "claude-3",
   "claude-opus-4-0",
@@ -50,10 +44,8 @@ export function supportsTemperature(model: string): boolean {
   return matchesAny(model, TEMPERATURE_MODELS);
 }
 
-// Translates the block's thinking settings into the right request shape for the
-// given model. Adaptive models use `{ type: "adaptive" }` (depth is controlled by
-// `output_config.effort` instead of a token budget); older models keep the fixed
-// `budget_tokens`.
+// Adaptive models use `{ type: "adaptive" }` (depth via `output_config.effort`);
+// older models keep the fixed `budget_tokens`.
 export function buildThinkingConfig(
   model: string,
   thinking: boolean | undefined,
@@ -63,9 +55,8 @@ export function buildThinkingConfig(
     if (thinking) {
       return { type: "adaptive" };
     }
-    // Fable 5 / Mythos 5 always think and reject an explicit "disabled"; omit the
-    // field for them, disable it explicitly for other adaptive models (otherwise
-    // some of them, e.g. Sonnet 5, would run adaptive thinking by default).
+    // Always-on models reject "disabled" (omit); other adaptive models need an
+    // explicit disable, else they'd think by default.
     return matchesAny(model, ALWAYS_ON_THINKING_MODELS)
       ? undefined
       : { type: "disabled" };
@@ -76,11 +67,26 @@ export function buildThinkingConfig(
     : undefined;
 }
 
-// Effort only applies to adaptive-thinking models; older models reject it, so we
-// drop it for them (they use the thinking budget instead).
+// Effort applies only to adaptive models; older ones reject it (they use the budget).
 export function effortForModel(
   model: string,
   effort: Effort | undefined,
 ): Effort | undefined {
   return usesAdaptiveThinking(model) ? effort : undefined;
+}
+
+// Temperature is rejected while thinking is on (enabled or adaptive), and newest
+// models reject it entirely - send it only when the model allows it AND thinking is off.
+export function temperatureForModel(
+  model: string,
+  temperature: number | undefined,
+  thinkingConfig: Anthropic.Beta.Messages.BetaThinkingConfigParam | undefined,
+): number | undefined {
+  if (!supportsTemperature(model)) {
+    return undefined;
+  }
+
+  const thinkingOn =
+    thinkingConfig?.type === "enabled" || thinkingConfig?.type === "adaptive";
+  return thinkingOn ? undefined : temperature;
 }

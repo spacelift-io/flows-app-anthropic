@@ -18,7 +18,7 @@ import {
   Effort,
   buildThinkingConfig,
   effortForModel,
-  supportsTemperature,
+  temperatureForModel,
   usesAdaptiveThinking,
 } from "../thinking";
 
@@ -158,16 +158,22 @@ function streamMessage(params: {
   ];
 
   const resolvedEffort = effortForModel(model, effort);
+  const thinkingConfig = buildThinkingConfig(model, thinking, thinkingBudget);
+  const temperatureToSend = temperatureForModel(
+    model,
+    temperature,
+    thinkingConfig,
+  );
 
   return client.beta.messages.stream(
     {
       max_tokens: maxTokens,
-      temperature: supportsTemperature(model) ? temperature : undefined,
+      temperature: temperatureToSend,
       system: systemPrompt,
       model,
       messages,
       tools: allTools,
-      thinking: buildThinkingConfig(model, thinking, thinkingBudget),
+      thinking: thinkingConfig,
       tool_choice:
         allTools.length > 0
           ? shouldCallSpecificTool

@@ -183,7 +183,7 @@ export const generateMessage: AppBlock = {
         temperature: {
           name: "Temperature",
           description:
-            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic. Ignored by newer models (Opus 4.7+, Sonnet 5, Fable 5), which don't support a custom temperature.",
+            "Amount of randomness injected into the response. Defaults to `1.0`. Ranges from `0.0` to `1.0`. Use temperature closer to `0.0` for analytical / multiple choice, and closer to `1.0` for creative and generative tasks. Note that even with temperature of `0.0`, the results will not be fully deterministic. Ignored by newer models (Opus 4.7+, Sonnet 5, Fable 5), which don't support a custom temperature, and ignored whenever thinking is enabled.",
           type: "number",
           required: false,
         },
