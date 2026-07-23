@@ -155,12 +155,6 @@ export const agent: AppBlock = {
                 type: "boolean",
                 description: "Whether to enable thinking",
               },
-              budget: {
-                title: "Budget",
-                type: "number",
-                description:
-                  "The number of tokens to use for thinking. Only used by older models; models with adaptive thinking use the effort setting instead.",
-              },
               effort: {
                 title: "Effort",
                 type: "string",
@@ -174,12 +168,19 @@ export const agent: AppBlock = {
                 description:
                   "Reasoning effort for models with adaptive thinking. Higher effort means deeper reasoning and higher token usage. `xhigh` requires Opus 4.7+ or Sonnet 5. Ignored by older models, which use the budget instead.",
               },
+              budget: {
+                title: "Budget",
+                type: "number",
+                description:
+                  "The number of tokens to use for thinking. Only used by older models; models with adaptive thinking use the effort setting instead.",
+              },
             },
-            required: ["enabled", "budget"],
+            required: ["enabled"],
           },
           required: false,
           default: {
             enabled: true,
+            effort: "medium",
             budget: 2048,
           },
         },

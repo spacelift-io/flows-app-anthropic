@@ -148,9 +148,9 @@ export function streamMessage(params: {
     ...(hasSkills ? SKILLS_BETAS : []),
   ];
 
-  const resolvedEffort = effortForModel(model, effort);
   const thinkingConfig = buildThinkingConfig(model, thinking, thinkingBudget);
-  const temperatureToSend = temperatureForModel(
+  const resolvedEffort = effortForModel(effort, thinkingConfig);
+  const resolvedTemperature = temperatureForModel(
     model,
     temperature,
     thinkingConfig,
@@ -159,7 +159,7 @@ export function streamMessage(params: {
   return client.beta.messages.stream(
     {
       max_tokens: maxTokens,
-      temperature: temperatureToSend,
+      temperature: resolvedTemperature,
       system: systemPrompt,
       model,
       messages,

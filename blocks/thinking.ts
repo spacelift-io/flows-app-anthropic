@@ -67,12 +67,13 @@ export function buildThinkingConfig(
     : undefined;
 }
 
-// Effort applies only to adaptive models; older ones reject it (they use the budget).
+// Effort only applies with adaptive thinking actually on; drop it otherwise (legacy
+// models and disabled thinking reject it).
 export function effortForModel(
-  model: string,
   effort: Effort | undefined,
+  thinkingConfig: Anthropic.Beta.Messages.BetaThinkingConfigParam | undefined,
 ): Effort | undefined {
-  return usesAdaptiveThinking(model) ? effort : undefined;
+  return thinkingConfig?.type === "adaptive" ? effort : undefined;
 }
 
 // Temperature is rejected while thinking is on (enabled or adaptive), and newest

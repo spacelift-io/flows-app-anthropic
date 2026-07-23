@@ -74,14 +74,6 @@ export const generateMessage: AppBlock = {
           required: false,
           default: true,
         },
-        thinkingBudget: {
-          name: "Thinking budget",
-          description:
-            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`. Only used by older models; models with adaptive thinking use the effort setting instead.",
-          type: "number",
-          required: false,
-          default: 2048,
-        },
         effort: {
           name: "Effort",
           description:
@@ -97,6 +89,15 @@ export const generateMessage: AppBlock = {
             ],
           },
           required: false,
+          default: "medium",
+        },
+        thinkingBudget: {
+          name: "Thinking budget",
+          description:
+            "Determines how many tokens Claude can use for its internal reasoning process. Must be ≥1024 and less than `max_tokens`. Only used by older models; models with adaptive thinking use the effort setting instead.",
+          type: "number",
+          required: false,
+          default: 2048,
         },
         toolDefinitions: {
           name: "Tools",
